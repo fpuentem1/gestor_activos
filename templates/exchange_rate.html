@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Tipo de Cambio{% endblock %}
+{% block content %}
+<h2>Actualizar Tipo de Cambio</h2>
+<form action="{{ url_for('exchange_rate') }}" method="POST">
+    <div class="form-group">
+        <label for="month">Mes (AAAA-MM):</label>
+        <input type="text" class="form-control" id="month" name="month" placeholder="2025-04" required>
+    </div>
+    <div class="form-group">
+        <label for="rate">Tipo de Cambio (pesos por 1 dólar):</label>
+        <input type="number" step="any" class="form-control" id="rate" name="rate" placeholder="Ejemplo: 23" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Actualizar Tipo de Cambio</button>
+</form>
+{% endblock %}

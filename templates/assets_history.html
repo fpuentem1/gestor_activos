@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Histórico de Activos{% endblock %}
+{% block content %}
+<h2>Histórico de Activos (Valores Normalizados en USD)</h2>
+<div>
+    {{ table_html|safe }}
+</div>
+<h3>Total por Mes</h3>
+<div>
+    {{ totals_html|safe }}
+</div>
+{% endblock %}

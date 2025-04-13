@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Comparación de Exposición por Clase{% endblock %}
+{% block content %}
+<h2>Comparación de Exposición por Clase</h2>
+{% if comparison|length == 0 %}
+  <p>No hay datos para mostrar.</p>
+{% else %}
+  <p><strong>Total del Portafolio (USD):</strong> ${{ total_portfolio|comma }}</p>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Clase</th>
+        <th>Valor (USD)</th>
+        <th>Porcentaje del Portafolio (%)</th>
+        <th>Objetivo (%)</th>
+        <th>Desviación (%)</th>
+        <th>Recomendación</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in comparison %}
+      <tr>
+        <td>{{ item.clase }}</td>
+        <td>${{ item.value|comma }}</td>
+        <td>{{ item.percentage|round(0) }}</td>
+        <td>
+          {% if item.target is not none %}
+            {{ item.target }}
+          {% else %}
+            No definido
+          {% endif %}
+        </td>
+        <td>
+          {% if item.deviation is not none %}
+            {{ item.deviation|round(0) }}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+        <td>
+          {% if item.target is not none %}
+            {% if item.deviation > 5 %}
+              Sobreponderado. Considera reducir.
+            {% elif item.deviation < -5 %}
+              Subponderado. Considera aumentar.
+            {% else %}
+              Dentro del objetivo.
+            {% endif %}
+          {% else %}
+            Objetivo no definido.
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

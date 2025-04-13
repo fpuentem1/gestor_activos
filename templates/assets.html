@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ingreso de Activos{% endblock %}
+{% block content %}
+<h2>Ingresar Activos</h2>
+<form action="{{ url_for('assets') }}" method="POST">
+    <div class="form-group">
+        <label for="asset_name">Nombre del Activo:</label>
+        <input type="text" class="form-control" id="asset_name" name="asset_name" required>
+    </div>
+    <div class="form-group">
+        <label for="location">Ubicación:</label>
+        <input type="text" class="form-control" id="location" name="location">
+    </div>
+    <div class="form-group">
+        <label for="amount">Monto:</label>
+        <input type="number" step="any" class="form-control" id="amount" name="amount" required>
+    </div>
+    <div class="form-group">
+        <label for="currency">Moneda:</label>
+        <select class="form-control" id="currency" name="currency">
+            <option value="USD">USD</option>
+            <option value="MXN">MXN</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="month">Mes (AAAA-MM):</label>
+        <input type="text" class="form-control" id="month" name="month" placeholder="2025-04" required>
+    </div>
+    <div class="form-group">
+        <label for="clase">Clase de Activo:</label>
+        <input type="text" class="form-control" id="clase" name="clase" required>
+    </div>
+    <!-- Campo Observaciones -->
+    <div class="form-group">
+        <label for="observaciones">Observaciones:</label>
+        <input type="text" class="form-control" id="observaciones" name="observaciones" placeholder="(Opcional)">
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar Activo</button>
+</form>
+{% endblock %}

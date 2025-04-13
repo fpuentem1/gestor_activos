@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Análisis Avanzado AI{% endblock %}
+{% block content %}
+<h2>Análisis Avanzado del Portafolio</h2>
+{% if metrics %}
+    <p><strong>Total del Portafolio (USD):</strong> ${{ metrics.total_usd|round(2) }}</p>
+    <p><strong>Índice de Diversificación (HHI):</strong> {{ metrics.hhi|round(4) }}</p>
+{% endif %}
+<div>
+    <h3>Evolución por Clase</h3>
+    {{ chart_html|safe }}
+</div>
+<div class="mt-3">
+    <h3>Recomendaciones</h3>
+    <p>{{ recommendations|safe }}</p>
+</div>
+{% endblock %}

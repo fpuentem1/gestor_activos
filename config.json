@@ -1,0 +1,10 @@
+{
+    "risk_threshold": 30,
+    "target_exposure": {
+        "Acciones": 20,
+        "Bonos": 20,
+        "Inmuebles": 30,
+        "Otros": 30
+    },
+    "current_strategy": "Conservador"
+}

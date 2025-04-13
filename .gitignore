@@ -1,0 +1,9 @@
+# Ignorar el entorno virtual
+env/
+
+# Ignorar archivos compilados
+__pycache__/
+*.pyc
+
+# Otros archivos que quieras ignorar (por ejemplo, MacOS)
+.DS_Store

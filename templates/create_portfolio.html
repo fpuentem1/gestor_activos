@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Crear Portafolio{% endblock %}
+{% block content %}
+<h2>Crear Portafolio</h2>
+<form action="{{ url_for('create_portfolio') }}" method="POST">
+    <div class="form-group">
+        <label for="name">Nombre del Portafolio:</label>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Ej. Mi Portafolio" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Crear</button>
+</form>
+{% endblock %}

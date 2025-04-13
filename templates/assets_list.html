@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Listado de Activos{% endblock %}
+{% block content %}
+<h2>Listado de Activos</h2>
+<table class="table table-striped datatable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Ubicación</th>
+            <th>Monto</th>
+            <th>Moneda</th>
+            <th>Mes</th>
+            <th>Clase</th>
+            <th>Fecha Ingreso</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asset in assets %}
+        <tr>
+            <td>{{ asset['id'] }}</td>
+            <td>{{ asset['asset_name'] }}</td>
+            <td>{{ asset['location'] }}</td>
+            <td>{{ asset['amount']|comma }}</td>
+            <td>{{ asset['currency'] }}</td>
+            <td>{{ asset['month'] }}</td>
+            <td>{{ asset['clase'] }}</td>
+            <td>{{ asset['fecha_ingreso'][:7] }}</td>
+             <td>
+                <a class="btn btn-sm btn-primary" href="{{ url_for('edit_asset', id=asset['id']) }}">Editar</a>
+                <form action="{{ url_for('delete_asset', id=asset['id']) }}" method="POST" style="display:inline;">
+                    <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('¿Estás seguro de eliminar este activo?');">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a class="btn btn-secondary" href="{{ url_for('update_current') }}">Actualizar Activos del Mes Actual</a>
+{% endblock %}

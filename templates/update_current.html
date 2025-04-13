@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Actualizar Activos del Mes Actual{% endblock %}
+{% block content %}
+<h2>Actualizar Activos del Mes Actual ({{ current_month }})</h2>
+<form action="{{ url_for('update_current') }}" method="POST">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Monto Actual</th>
+                <th>Nuevo Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in assets %}
+            <tr>
+                <td>{{ asset['id'] }}</td>
+                <td>{{ asset['asset_name'] }}</td>
+                <td>{{ asset['amount']|comma }}</td>
+                <td>
+                    <input type="number" step="any" class="form-control" name="amount_{{ asset['id'] }}" placeholder="Nuevo monto" required>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Actualizar Valores</button>
+</form>
+{% endblock %}

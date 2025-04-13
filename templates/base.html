@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Gestor de Activos{% endblock %}</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Barra de navegación con dropdowns -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Gestor de Activos</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" 
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>        
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+                <!-- Enlaces directos -->
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('assets') }}">Ingresar Activos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('assets_list') }}">Listado</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('copy_assets') }}">Copiar Activos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('assets_history_view') }}">Histórico</a></li>
+                
+                <!-- Dropdown para Reportes -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="reportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Reportes
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="reportDropdown">
+                        <a class="dropdown-item" href="{{ url_for('assets_evolution') }}">Evolución</a>
+                        <a class="dropdown-item" href="{{ url_for('monthly_growth') }}">Crecimiento</a>
+                        <a class="dropdown-item" href="{{ url_for('assets_class_comparison') }}">Comparación</a>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Cerrar Sesión</a>
+                    </div>
+                </li>
+                
+                <!-- Dropdown para AI & Config -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="aiDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        AI & Config
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="aiDropdown">
+                        <a class="dropdown-item" href="{{ url_for('assets_ai') }}">Análisis AI</a>
+                        <a class="dropdown-item" href="{{ url_for('ai_config') }}">Config AI</a>
+                        <a class="dropdown-item" href="{{ url_for('exchange_rate') }}">Tipo de Cambio</a>
+                        <a class="dropdown-item" href="{{ url_for('portfolios') }}">Portafolios</a>
+                        <a class="dropdown-item" href="{{ url_for('help_page') }}">Ayuda</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Mostrar el portafolio actual -->
+    <div class="container mt-2">
+        {% if session.portfolio_id %}
+        <div class="alert alert-info text-center" role="alert">
+            Portafolio Actual: ID {{ session.portfolio_id }}. 
+            <a href="{{ url_for('portfolios') }}" class="alert-link">Cambiar portafolio</a>.
+        </div>
+        {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+            No se ha seleccionado un portafolio. 
+            <a href="{{ url_for('portfolios') }}" class="alert-link">Selecciona uno</a>.
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-4">
+        © 2025 Gestor de Activos
+    </footer>
+    
+    <!-- jQuery (para DataTables y Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <!-- Bootstrap JS y dependencias -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.datatable').DataTable({
+          "pageLength": 10,
+          "lengthChange": false,
+          "ordering": true,
+          "autoWidth": false
+        });
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
