@@ -1,7 +1,7 @@
 # ======================================================
 # IMPORTS: Coloca estas líneas al inicio del archivo app.py.
 # ======================================================
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import json
 import pandas as pd
 import plotly.express as px
@@ -43,7 +43,6 @@ def load_user(user_id):
 def require_login():
     if request.endpoint not in ['login', 'static'] and not current_user.is_authenticated:
         return redirect(url_for('login'))
-    
 
 # ======================================================
 # FILTRO PERSONALIZADO: Formatea números con comas y sin decimales.
@@ -75,6 +74,18 @@ def save_config(config):
     """Guarda la configuración en config.json."""
     with open('config.json', 'w') as f:
         json.dump(config, f, indent=4)
+
+from functools import wraps
+from flask import session  
+
+def portfolio_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'portfolio_id' not in session or session['portfolio_id'] == 'default':
+            flash("Debe seleccionar un portafolio antes de continuar.", "warning")
+            return redirect(url_for('portfolios'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # ======================================================
 # FUNCIONES AUXILIARES: Obtener tipo de cambio y normalizar montos.
@@ -149,10 +160,12 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    return redirect(url_for('assets_list'))  # Redirige a la página del listado de activos
+    return redirect(url_for('assets_list'))
 
 # Ingreso de activos (incluye campo "observaciones")
 @app.route('/assets', methods=['GET', 'POST'])
+@login_required
+@portfolio_required
 def assets():
     if request.method == 'POST':
         asset_name = request.form.get('asset_name')
@@ -162,6 +175,7 @@ def assets():
         month = request.form.get('month')
         clase = request.form.get('clase')
         observaciones = request.form.get('observaciones', "")
+        # Usar solo año-mes para fecha_ingreso
         fecha_ingreso = datetime.now().strftime("%Y-%m")
         portfolio_id = session.get('portfolio_id', 'default')
         conn = get_db_connection()
@@ -176,21 +190,24 @@ def assets():
 
 # Listado de activos
 @app.route('/assets/list')
+@login_required
+@portfolio_required
 def assets_list():
+    portfolio_id = session.get('portfolio_id', 'default')
     conn = get_db_connection()
-    portfolio_id = 'default'
     assets = conn.execute('SELECT * FROM assets WHERE portfolio_id = ?', (portfolio_id,)).fetchall()
     conn.close()
     return render_template('assets_list.html', assets=assets)
 
 # NUEVO ENDPOINT: Actualizar activos del mes actual.
 @app.route('/assets/update_current', methods=['GET', 'POST'])
+@login_required
+@portfolio_required
 def update_current():
     current_month = datetime.now().strftime("%Y-%m")
     conn = get_db_connection()
     if request.method == 'POST':
-        # Actualiza cada activo del mes actual (se asume que cada campo se llama "amount_<id>")
-        assets = conn.execute("SELECT id FROM assets WHERE month = ?", (current_month,)).fetchall()
+        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id', 'default'))).fetchall()
         for asset in assets:
             new_amount = request.form.get(f"amount_{asset['id']}")
             if new_amount:
@@ -204,13 +221,15 @@ def update_current():
         flash("Valores actualizados para el mes actual.", "success")
         return redirect(url_for('assets_list'))
     else:
-        # Muestra activos del mes actual sin observaciones (activos activos)
-        assets = conn.execute("SELECT * FROM assets WHERE month = ? AND (observaciones IS NULL OR observaciones = '')", (current_month,)).fetchall()
+        assets = conn.execute("SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
+                                (current_month, session.get('portfolio_id', 'default'))).fetchall()
         conn.close()
         return render_template('update_current.html', assets=assets, current_month=current_month)
 
 # Edición de activo (incluye campo "observaciones" con opción para eliminar)
 @app.route('/assets/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@portfolio_required
 def edit_asset(id):
     conn = get_db_connection()
     asset = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
@@ -242,6 +261,7 @@ def edit_asset(id):
 
 # Eliminación de activo (con confirmación)
 @app.route('/assets/delete/<int:id>', methods=['POST'])
+@login_required
 def delete_asset(id):
     conn = get_db_connection()
     conn.execute('DELETE FROM assets WHERE id = ?', (id,))
@@ -249,48 +269,61 @@ def delete_asset(id):
     conn.close()
     flash("Activo eliminado definitivamente.", "danger")
     return redirect(url_for('assets_list'))
-# ----------------------------------------------------------------
+
+# ------------------------------------------------------------------
 # Copiar activos de un mes a otro con validación de selección
-# ----------------------------------------------------------------
+# ------------------------------------------------------------------
 @app.route('/assets/copy', methods=['GET', 'POST'])
+@login_required
+@portfolio_required
 def copy_assets():
-    # Usamos el mes actual como mes fuente; por ejemplo, si hoy es abril 2025, source_month = "2025-04".
     source_month = datetime.now().strftime("%Y-%m")
-    # Se sugiere por defecto el mismo valor para el nuevo mes (el usuario deberá editarlo, por ejemplo, "2025-05")
-    default_new_month = source_month
+    default_new_month = source_month  
+    current_portfolio_id = session.get('portfolio_id', 'default')
 
     conn = get_db_connection()
     if request.method == 'POST':
-        # Se obtiene el nuevo mes ingresado por el usuario (formato "AAAA-MM")
         new_month = request.form.get('new_month').strip()
-        # Se obtiene la lista de activos seleccionados mediante los checkboxes
         selected_assets = request.form.getlist('asset_ids')
         for asset_id in selected_assets:
-            # Buscar el activo en la base de datos
-            asset = conn.execute("SELECT * FROM assets WHERE id = ?", (asset_id,)).fetchone()
+            asset = conn.execute("SELECT * FROM assets WHERE id = ? AND portfolio_id = ?", (asset_id, current_portfolio_id)).fetchone()
             if asset:
-                # La nueva fecha de ingreso se guarda en formato "AAAA-MM"
                 new_fecha = datetime.now().strftime("%Y-%m")
                 conn.execute(
-                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    (asset['asset_name'], asset['location'], asset['amount'], asset['currency'], new_month, asset['clase'], asset['observaciones'], new_fecha)
+                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (asset['asset_name'], asset['location'], asset['amount'], asset['currency'], new_month, asset['clase'], asset['observaciones'], new_fecha, asset['portfolio_id'])
                 )
         conn.commit()
         conn.close()
         flash("Proceso de copia completado correctamente para el mes " + new_month, "success")
         return redirect(url_for('assets_list'))
     else:
-        # En el método GET, mostramos todos los activos del mes fuente (actual) que NO tengan observaciones
         assets = conn.execute(
-            "SELECT * FROM assets WHERE month = ? AND (observaciones IS NULL OR observaciones = '')",
-            (source_month,)
+            "SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
+            (source_month, portfolio_id)
         ).fetchall()
         conn.close()
         return render_template('copy_assets.html', assets=assets, prev_month=source_month, default_new_month=default_new_month)
 
+# Reporte de activos: Distribución por moneda.
+@app.route('/assets/report')
+@login_required
+def assets_report():
+    conn = get_db_connection()
+    df = pd.read_sql_query("SELECT * FROM assets", conn)
+    conn.close()
+    if df.empty:
+        chart_html = "<p>No hay datos para mostrar.</p>"
+    else:
+        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
+        df_grouped = df.groupby('currency')['amount'].sum().reset_index()
+        fig = px.pie(df_grouped, values='amount', names='currency', title="Distribución de Activos por Moneda")
+        chart_html = fig.to_html(full_html=False)
+    return render_template('assets_report.html', chart_html=chart_html)
 
 # Evolución de activos: Por mes y clase, normalizando a MXN.
 @app.route('/assets/evolution')
+@login_required
 def assets_evolution():
     conn = get_db_connection()
     df = pd.read_sql_query("SELECT * FROM assets", conn)
@@ -312,6 +345,7 @@ def assets_evolution():
 
 # Crecimiento Mensual: Variación porcentual mes a mes (MXN).
 @app.route('/assets/monthly_growth')
+@login_required
 def monthly_growth():
     conn = get_db_connection()
     df = pd.read_sql_query("SELECT * FROM assets", conn)
@@ -332,6 +366,7 @@ def monthly_growth():
 
 # Comparación de Exposición por Clase: Totales, porcentajes y desviación respecto a objetivos (MXN).
 @app.route('/assets/class_comparison')
+@login_required
 def assets_class_comparison():
     config = load_config()
     target_exposure = config.get("target_exposure", {})
@@ -359,6 +394,7 @@ def assets_class_comparison():
 
 # HISTÓRICO DE ACTIVOS: Tabla pivote con valores normalizados a USD (principal) y totales/variaciones en USD y MXN.
 @app.route('/assets/history_view')
+@login_required
 def assets_history_view():
     conn = get_db_connection()
     df = pd.read_sql_query("SELECT * FROM assets", conn)
@@ -445,51 +481,9 @@ def assets_history_view():
         table_html = html
     return render_template('assets_history.html', table_html=table_html)
 
-# ------------------------------------------------------------------
-# ENDPOINTS PARA GESTIÓN DE PORTAFOLIOS
-# ------------------------------------------------------------------
-from flask import session  # Asegúrate de importar session si no lo has hecho anteriormente
-
-# Listar portafolios existentes
-@app.route('/portfolios')
-@login_required
-def portfolios():
-    conn = get_db_connection()
-    portfolios = conn.execute('SELECT * FROM portfolios').fetchall()
-    conn.close()
-    return render_template('portfolios.html', portfolios=portfolios)
-
-# Crear un nuevo portafolio
-@app.route('/portfolios/create', methods=['GET', 'POST'])
-@login_required
-def create_portfolio():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        if name:
-            conn = get_db_connection()
-            try:
-                conn.execute('INSERT INTO portfolios (name) VALUES (?)', (name,))
-                conn.commit()
-                flash("Portafolio creado exitosamente.", "success")
-            except Exception as e:
-                flash("Error al crear el portafolio: " + str(e), "danger")
-            finally:
-                conn.close()
-            return redirect(url_for('portfolios'))
-        else:
-            flash("El nombre del portafolio es obligatorio.", "warning")
-    return render_template('create_portfolio.html')
-
-# Seleccionar portafolio actual para la sesión
-@app.route('/portfolios/select/<int:portfolio_id>')
-@login_required
-def select_portfolio(portfolio_id):
-    session['portfolio_id'] = portfolio_id
-    flash("Portafolio seleccionado.", "success")
-    return redirect(url_for('assets_list'))
-
 # Análisis AI: Sugerencias basadas en la distribución por clase.
 @app.route('/assets/ai')
+@login_required
 def assets_ai():
     conn = get_db_connection()
     df = pd.read_sql_query("SELECT * FROM assets", conn)
@@ -517,6 +511,7 @@ def assets_ai():
 
 # Configuración AI: Permite ajustar el umbral de riesgo y objetivos de exposición.
 @app.route('/assets/ai/config', methods=['GET', 'POST'])
+@login_required
 def ai_config():
     config = load_config()
     message = None
@@ -541,6 +536,7 @@ def ai_config():
 
 # Tipo de Cambio Global: Permite actualizar el tipo de cambio para un mes.
 @app.route('/exchange_rate', methods=['GET', 'POST'])
+@login_required
 def exchange_rate():
     if request.method == 'POST':
         month = request.form.get('month').strip()
@@ -562,8 +558,61 @@ def exchange_rate():
 
 # Help Page
 @app.route('/help')
+@login_required
 def help_page():
     return render_template('help.html')
+
+# ------------------------------------------------------------------
+# ENDPOINTS PARA GESTIÓN DE PORTAFOLIOS
+# ------------------------------------------------------------------
+@app.route('/portfolios')
+@login_required
+def portfolios():
+    conn = get_db_connection()
+    portfolios = conn.execute('SELECT * FROM portfolios').fetchall()
+    conn.close()
+    return render_template('portfolios.html', portfolios=portfolios)
+
+@app.route('/portfolios/create', methods=['GET', 'POST'])
+@login_required
+def create_portfolio():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        if name:
+            conn = get_db_connection()
+            try:
+                conn.execute('INSERT INTO portfolios (name) VALUES (?)', (name,))
+                conn.commit()
+                flash("Portafolio creado exitosamente.", "success")
+            except Exception as e:
+                flash("Error al crear el portafolio: " + str(e), "danger")
+            finally:
+                conn.close()
+            return redirect(url_for('portfolios'))
+        else:
+            flash("El nombre del portafolio es obligatorio.", "warning")
+    return render_template('create_portfolio.html')
+
+@app.route('/portfolios/select/<int:portfolio_id>')
+@login_required
+def select_portfolio(portfolio_id):
+    session['portfolio_id'] = portfolio_id
+    flash("Portafolio seleccionado.", "success")
+    return redirect(url_for('assets_list'))
+
+# ==================================================================
+# CONTEXT PROCESSOR: Inyectar el nombre del portafolio actual en todas las plantillas
+# ==================================================================
+@app.context_processor
+def inject_portfolio():
+    portfolio_id = session.get('portfolio_id', 'default')
+    name = "Default"
+    conn = get_db_connection()
+    row = conn.execute('SELECT name FROM portfolios WHERE id = ?', (portfolio_id,)).fetchone()
+    conn.close()
+    if row is not None:
+        name = row['name']
+    return {'current_portfolio_name': name}
 
 # ======================================================
 # BLOQUE FINAL: Inicia la APLICACIÓN.

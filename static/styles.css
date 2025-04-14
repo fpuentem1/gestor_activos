@@ -17,3 +17,18 @@ main {
     padding: 20px;
     background-color: #fff;
 }
+/* -----------------------------------
+   Fijar la segunda columna (Nombre del Activo)
+----------------------------------- */
+table.dataTable thead th:nth-child(2),
+table.dataTable tbody td:nth-child(2) {
+    position: sticky;
+    left: 0;
+    background-color: #fff; /* Ajusta este color si es necesario para que coincida con el fondo de tu tabla */
+    z-index: 2;
+}
+
+/* Habilitar scroll horizontal en el contenedor de DataTables */
+.dataTables_wrapper {
+    overflow-x: auto;
+}

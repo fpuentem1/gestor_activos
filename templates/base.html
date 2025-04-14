@@ -10,23 +10,32 @@
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     {% block head %}{% endblock %}
+    <!-- DataTables Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css">
 </head>
 <body>
-    <!-- Barra de navegación con dropdowns -->
+    <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="{{ url_for('index') }}">Gestor de Activos</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" 
                 aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
-        </button>        
+        </button>
+        <!-- Sección izquierda: menú principal -->
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
-            <ul class="navbar-nav">
-                <!-- Enlaces directos -->
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('assets') }}">Ingresar Activos</a></li>
+            <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('assets_list') }}">Listado</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('assets') }}">Ingresar Activos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('copy_assets') }}">Copiar Activos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('assets_history_view') }}">Histórico</a></li>
-                
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+            </ul>
+            <!-- Indicador del portafolio actual -->
+            <span class="navbar-text text-white mr-3">
+                Portafolio: {{ current_portfolio_name }}
+            </span>
+            <!-- Sección derecha: Dropdowns -->
+            <ul class="navbar-nav">
                 <!-- Dropdown para Reportes -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="reportDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -36,10 +45,8 @@
                         <a class="dropdown-item" href="{{ url_for('assets_evolution') }}">Evolución</a>
                         <a class="dropdown-item" href="{{ url_for('monthly_growth') }}">Crecimiento</a>
                         <a class="dropdown-item" href="{{ url_for('assets_class_comparison') }}">Comparación</a>
-                        <a class="dropdown-item" href="{{ url_for('logout') }}">Cerrar Sesión</a>
                     </div>
                 </li>
-                
                 <!-- Dropdown para AI & Config -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="aiDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -57,33 +64,33 @@
         </div>
     </nav>
     
-    <!-- Mostrar el portafolio actual -->
+    <!-- Mensaje del portafolio actual -->
     <div class="container mt-2">
         {% if session.portfolio_id %}
-        <div class="alert alert-info text-center" role="alert">
-            Portafolio Actual: ID {{ session.portfolio_id }}. 
-            <a href="{{ url_for('portfolios') }}" class="alert-link">Cambiar portafolio</a>.
-        </div>
+            <div class="alert alert-info text-center" role="alert">
+                Portafolio Actual: ID {{ session.portfolio_id }} - {{ current_portfolio_name }}.
+                <a href="{{ url_for('portfolios') }}" class="alert-link">Cambiar portafolio</a>.
+            </div>
         {% else %}
-        <div class="alert alert-warning text-center" role="alert">
-            No se ha seleccionado un portafolio. 
-            <a href="{{ url_for('portfolios') }}" class="alert-link">Selecciona uno</a>.
-        </div>
+            <div class="alert alert-warning text-center" role="alert">
+                No se ha seleccionado un portafolio.
+                <a href="{{ url_for('portfolios') }}" class="alert-link">Selecciona uno</a>.
+            </div>
         {% endif %}
     </div>
     
     <div class="container mt-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            {% endfor %}
-          {% endif %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
     </div>
@@ -100,15 +107,26 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-      $(document).ready(function(){
-        $('.datatable').DataTable({
-          "pageLength": 10,
-          "lengthChange": false,
-          "ordering": true,
-          "autoWidth": false
-        });
-      });
+     $(document).ready(function(){
+  $('.datatable').DataTable({
+    "pageLength": 10,
+    "lengthChange": false,
+    "ordering": true,
+    "autoWidth": false,
+    // Añadimos la extensión Buttons para Column Visibility
+    dom: 'Bfrtip',
+    buttons: [
+      {
+        extend: 'colvis',
+        columns: ':gt(0)'   // Ejemplo: permite ocultar todas las columnas excepto la primera.
+      }
+    ]
+  });
+});
     </script>
     {% block scripts %}{% endblock %}
+    <!-- DataTables Buttons JS y dependencias -->
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.colVis.min.js"></script>
 </body>
 </html>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Portafolios{% endblock %}
+{% block content %}
+  <h2>Portafolios</h2>
+
+  {% if portfolios|length == 0 %}
+    <div class="alert alert-info">
+      No se han encontrado portafolios. Por favor, crea un portafolio nuevo.
+    </div>
+  {% else %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for portfolio in portfolios %}
+          <tr>
+            <td>{{ portfolio['id'] }}</td>
+            <td>{{ portfolio['name'] }}</td>
+            <td>
+              <a class="btn btn-sm btn-primary" href="{{ url_for('select_portfolio', portfolio_id=portfolio['id']) }}">Seleccionar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  <a href="{{ url_for('create_portfolio') }}" class="btn btn-success">Crear Portafolio Nuevo</a>
+{% endblock %}
