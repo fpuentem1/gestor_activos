@@ -3,19 +3,22 @@
 {% block content %}
 <h2>Ingresar Activos</h2>
 <form action="{{ url_for('assets') }}" method="POST">
-    <!-- Campos existentes -->
+    <!-- Nombre del Activo -->
     <div class="form-group">
         <label for="asset_name">Nombre del Activo:</label>
         <input type="text" class="form-control" id="asset_name" name="asset_name" required>
     </div>
+    <!-- Ubicación -->
     <div class="form-group">
         <label for="location">Ubicación:</label>
         <input type="text" class="form-control" id="location" name="location">
     </div>
+    <!-- Monto -->
     <div class="form-group">
         <label for="amount">Monto:</label>
         <input type="number" step="any" class="form-control" id="amount" name="amount" required>
     </div>
+    <!-- Moneda -->
     <div class="form-group">
         <label for="currency">Moneda:</label>
         <select class="form-control" id="currency" name="currency">
@@ -23,25 +26,25 @@
             <option value="MXN">MXN</option>
         </select>
     </div>
+    <!-- Mes -->
     <div class="form-group">
         <label for="month">Mes (AAAA-MM):</label>
         <input type="text" class="form-control" id="month" name="month" placeholder="2025-04" required>
     </div>
-    <!-- Nuevo: Selección de Clase -->
+    <!-- Selección de Clase (usando catálogo) -->
     <div class="form-group">
         <label for="class_id">Clase de Activo:</label>
         <select class="form-control" id="class_id" name="class_id" required>
-            <!-- Estas opciones se pueden cargar desde un endpoint (ver siguiente paso) -->
             {% for cls in classes %}
             <option value="{{ cls['id'] }}">{{ cls['name'] }}</option>
             {% endfor %}
         </select>
     </div>
-    <!-- Nuevo: Selección de Subclase -->
+    <!-- Selección de Subclase (se carga vía JavaScript) -->
     <div class="form-group">
         <label for="subclass_id">Subclase:</label>
         <select class="form-control" id="subclass_id" name="subclass_id" required>
-            <!-- Se llenará dinámicamente vía JavaScript basado en la clase seleccionada -->
+            <!-- Esta lista se llenará automáticamente según la clase seleccionada -->
         </select>
     </div>
     <!-- Campo Observaciones -->
@@ -49,7 +52,7 @@
         <label for="observaciones">Observaciones:</label>
         <input type="text" class="form-control" id="observaciones" name="observaciones" placeholder="(Opcional)">
     </div>
-    <!-- Atributos adicionales (ejemplo: rendimiento, plazo, fecha de pago) -->
+    <!-- Campos adicionales (ejemplo: rendimiento, plazo, fecha de pago) -->
     <div class="form-group">
         <label for="rendimiento">Rendimiento (%):</label>
         <input type="number" step="any" class="form-control" id="rendimiento" name="rendimiento" placeholder="Opcional">
@@ -64,4 +67,33 @@
     </div>
     <button type="submit" class="btn btn-primary">Guardar Activo</button>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function(){
+      // Función para cargar subclases de la clase seleccionada
+      function loadSubclasses(classId) {
+          $.getJSON("/api/subclasses/" + classId, function(data) {
+              var subclassSelect = $("#subclass_id");
+              subclassSelect.empty(); // Limpiar opciones existentes
+              $.each(data, function(index, item) {
+                  subclassSelect.append($("<option></option>")
+                      .attr("value", item.id)
+                      .text(item.name));
+              });
+          });
+      }
+      
+      // Al cargar la página, carga las subclases de la clase que esté seleccionada por defecto
+      var initialClassId = $("#class_id").val();
+      loadSubclasses(initialClassId);
+      
+      // Al cambiar la selección en el dropdown de Clase, actualizar el de Subclase
+      $("#class_id").change(function(){
+          var selectedClassId = $(this).val();
+          loadSubclasses(selectedClassId);
+      });
+  });
+</script>
 {% endblock %}

@@ -1,10 +1,9 @@
 import sqlite3
-import os
 
+db_path = "assets.db"  # Define el nombre de tu base de datos
 
 def get_db_connection():
-    db_path = os.path.join(os.path.dirname(__file__), "assets.db")
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=20)  # Usa db_path aquí y agrega timeout opcionalmente
     conn.row_factory = sqlite3.Row
     return conn
 def init_db():

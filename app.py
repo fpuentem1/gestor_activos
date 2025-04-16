@@ -170,24 +170,40 @@ def assets():
     if request.method == 'POST':
         asset_name = request.form.get('asset_name')
         location = request.form.get('location')
-        amount = float(request.form.get('amount'))
+        try:
+            amount = float(request.form.get('amount'))
+        except (ValueError, TypeError):
+            flash("El monto debe ser numérico.", "warning")
+            return redirect(url_for('assets'))
         currency = request.form.get('currency')
         month = request.form.get('month')
-        clase = request.form.get('clase')
+        class_id = request.form.get('class_id')
+        subclass_id = request.form.get('subclass_id')
         observaciones = request.form.get('observaciones', "")
-        # Usar solo año-mes para fecha_ingreso
+        # Usar solo año-mes para la fecha de ingreso
         fecha_ingreso = datetime.now().strftime("%Y-%m")
         portfolio_id = session.get('portfolio_id', 'default')
         conn = get_db_connection()
-        conn.execute(
-            'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id)
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for('assets'))
-    return render_template('assets.html')
+        try:
+            conn.execute(
+                'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id, class_id, subclass_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (asset_name, location, amount, currency, month, "", observaciones, fecha_ingreso, portfolio_id, class_id, subclass_id)
+            )
+            conn.commit()
+        except Exception as e:
+            flash("Error al insertar activo: " + str(e), "danger")
+            return redirect(url_for('assets'))
 
+        finally:
+            conn.close()
+        return redirect(url_for('assets'))
+    else:
+        # Rama GET: obtener las clases para el dropdown
+        conn = get_db_connection()
+        classes = conn.execute("SELECT * FROM classes").fetchall()
+        conn.close()
+        return render_template('assets.html', classes=classes)
+    
 # Listado de activos
 @app.route('/assets/list')
 @login_required

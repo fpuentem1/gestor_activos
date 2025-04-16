@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Configuración - Subclases{% endblock %}
+{% block content %}
+<h2>Configurar Subclases</h2>
+<form method="POST" action="{{ url_for('config_subclasses') }}">
+    <div class="form-group">
+        <label for="class_id">Seleccione la Clase:</label>
+        <select class="form-control" name="class_id" id="class_id" required>
+            {% for cls in classes %}
+                <option value="{{ cls['id'] }}">{{ cls['name'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="name">Nombre de la Subclase:</label>
+        <input type="text" class="form-control" name="name" id="name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Agregar Subclase</button>
+</form>
+<hr>
+<h3>Subclases existentes</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Clase</th>
+            <th>Subclase</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sub in subclasses %}
+            <tr>
+                <td>{{ sub['id'] }}</td>
+                <td>
+                    {% for cls in classes %}
+                        {% if cls['id'] == sub['class_id'] %}
+                            {{ cls['name'] }}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ sub['name'] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

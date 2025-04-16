@@ -1,44 +1,59 @@
 import sqlite3
-import os
 
-db_path = os.path.join(os.path.dirname(__file__), "assets.db")
+conn = sqlite3.connect("assets.db")
+conn.row_factory = sqlite3.Row
 
-conn = sqlite3.connect(db_path)
-c = conn.cursor()
-
-# Crea la tabla assets si no existe.
-c.execute("""
-CREATE TABLE IF NOT EXISTS assets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    asset_name TEXT NOT NULL,
-    location TEXT,
-    amount REAL,
-    currency TEXT,
-    month TEXT,
-    clase TEXT,
-    observaciones TEXT,
-    fecha_ingreso TEXT,
-    portfolio_id TEXT DEFAULT 'default'
-)
+# Tabla assets (ya la tienes)
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset_name TEXT NOT NULL,
+        location TEXT,
+        amount REAL,
+        currency TEXT,
+        month TEXT,
+        clase TEXT,
+        observaciones TEXT,
+        fecha_ingreso TEXT,
+        portfolio_id TEXT DEFAULT 'default',
+        estado TEXT DEFAULT 'activo'
+    );
 """)
 
-# Crea la tabla exchange_rate si no existe.
-c.execute("""
-CREATE TABLE IF NOT EXISTS exchange_rate (
-    month TEXT PRIMARY KEY,
-    rate REAL
-)
+# Crear tabla portfolios si no existe
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS portfolios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL
+    );
 """)
 
-# Crea la tabla portfolios si no existe.
-c.execute("""
-CREATE TABLE IF NOT EXISTS portfolios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
-)
+# Crear tabla classes si no existe
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS classes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL
+    );
+""")
+
+# Crear tabla subclasses si no existe
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS subclasses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        class_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        FOREIGN KEY (class_id) REFERENCES classes(id)
+    );
+""")
+
+# Crear tabla statuses si no existe
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS statuses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL
+    );
 """)
 
 conn.commit()
 conn.close()
-
-print("Tablas creadas exitosamente.")
+print("Tablas creadas o verificadas exitosamente.")

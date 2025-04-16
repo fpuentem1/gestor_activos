@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Configuración - Estatus{% endblock %}
+{% block content %}
+<h2>Configurar Estatus</h2>
+<form method="POST" action="{{ url_for('config_statuses') }}">
+    <div class="form-group">
+        <label for="name">Nombre del Estatus:</label>
+        <input type="text" class="form-control" name="name" id="name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Agregar Estatus</button>
+</form>
+<hr>
+<h3>Estatus existentes</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Estatus</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for status in statuses %}
+            <tr>
+                <td>{{ status['id'] }}</td>
+                <td>{{ status['name'] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
