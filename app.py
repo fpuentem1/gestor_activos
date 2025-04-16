@@ -236,6 +236,7 @@ def edit_asset(id):
     if asset is None:
         conn.close()
         return "Asset not found", 404
+
     if request.method == 'POST':
         asset_name = request.form.get('asset_name')
         location = request.form.get('location')
@@ -244,18 +245,17 @@ def edit_asset(id):
         month = request.form.get('month')
         clase = request.form.get('clase')
         observaciones = request.form.get('observaciones', "")
-        if observaciones.lower() == "eliminar":
-            conn.execute('DELETE FROM assets WHERE id = ?', (id,))
-            flash("Activo eliminado.", "warning")
-        else:
-            conn.execute(
-                'UPDATE assets SET asset_name = ?, location = ?, amount = ?, currency = ?, month = ?, clase = ?, observaciones = ? WHERE id = ?',
-                (asset_name, location, amount, currency, month, clase, observaciones, id)
-            )
-            flash("Activo actualizado.", "success")
+        estado = request.form.get('estado', "activo")  # Nuevo: se lee el estado desde el formulario
+
+        conn.execute(
+            'UPDATE assets SET asset_name = ?, location = ?, amount = ?, currency = ?, month = ?, clase = ?, observaciones = ?, estado = ? WHERE id = ?',
+            (asset_name, location, amount, currency, month, clase, observaciones, estado, id)
+        )
+        flash("Activo actualizado.", "success")
         conn.commit()
         conn.close()
         return redirect(url_for('assets_list'))
+
     conn.close()
     return render_template('edit_asset.html', asset=asset)
 
@@ -290,8 +290,8 @@ def copy_assets():
             if asset:
                 new_fecha = datetime.now().strftime("%Y-%m")
                 conn.execute(
-                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (asset['asset_name'], asset['location'], asset['amount'], asset['currency'], new_month, asset['clase'], asset['observaciones'], new_fecha, asset['portfolio_id'])
+                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (asset['asset_name'], asset['location'], asset['amount'], asset['currency'], new_month, asset['clase'], asset['observaciones'], new_fecha, asset['portfolio_id'], asset['estado'])
                 )
         conn.commit()
         conn.close()
@@ -299,8 +299,8 @@ def copy_assets():
         return redirect(url_for('assets_list'))
     else:
         assets = conn.execute(
-            "SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
-            (source_month, portfolio_id)
+            "SELECT * FROM assets WHERE month = ? AND portfolio_id = ?",
+            (source_month, current_portfolio_id)
         ).fetchall()
         conn.close()
         return render_template('copy_assets.html', assets=assets, prev_month=source_month, default_new_month=default_new_month)
@@ -614,6 +614,208 @@ def inject_portfolio():
         name = row['name']
     return {'current_portfolio_name': name}
 
+import json
+from flask import jsonify
+
+# Endpoint para obtener las clases (Tipos de Activo)
+@app.route('/api/classes')
+def api_classes():
+    conn = get_db_connection()
+    classes = conn.execute("SELECT * FROM classes").fetchall()
+    conn.close()
+    # Convertir los resultados a lista de diccionarios
+    classes_list = [dict(row) for row in classes]
+    return jsonify(classes_list)
+
+# Endpoint para obtener las subclases según una clase dada
+@app.route('/api/subclasses/<int:class_id>')
+def api_subclasses(class_id):
+    conn = get_db_connection()
+    subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?", (class_id,)).fetchall()
+    conn.close()
+    subclasses_list = [dict(row) for row in subclasses]
+    return jsonify(subclasses_list)
+
+# ==================================================================
+# ENDPOINTS PARA CONFIGURACIÓN DE CATÁLOGOS
+# ==================================================================
+
+# Página principal del módulo de configuración de catálogos
+@app.route('/config/catalogs')
+@login_required
+def config_catalogs():
+    return render_template('config_catalogs.html')
+
+# Configuración de Clases
+@app.route('/config/clases', methods=['GET', 'POST'])
+@login_required
+def config_clases():
+    conn = get_db_connection()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        if name:
+            conn.execute("INSERT INTO classes (name) VALUES (?)", (name,))
+            conn.commit()
+            flash("Clase creada exitosamente.", "success")
+        else:
+            flash("El nombre de la clase es obligatorio.", "warning")
+        conn.close()
+        return redirect(url_for('config_clases'))
+    else:
+        classes = conn.execute("SELECT * FROM classes").fetchall()
+        conn.close()
+        return render_template('config_clases.html', classes=classes)
+
+# Editar una clase
+@app.route('/config/clases/edit/<int:class_id>', methods=['GET', 'POST'])
+@login_required
+def edit_clase(class_id):
+    conn = get_db_connection()
+    clase = conn.execute("SELECT * FROM classes WHERE id = ?", (class_id,)).fetchone()
+    if clase is None:
+        conn.close()
+        flash("Clase no encontrada.", "danger")
+        return redirect(url_for('config_clases'))
+    
+    if request.method == 'POST':
+        new_name = request.form.get('name')
+        if not new_name:
+            flash("El nombre no puede estar vacío.", "warning")
+        else:
+            conn.execute("UPDATE classes SET name = ? WHERE id = ?", (new_name, class_id))
+            conn.commit()
+            flash("Clase actualizada exitosamente.", "success")
+        conn.close()
+        return redirect(url_for('config_clases'))
+    conn.close()
+    return render_template('edit_clase.html', clase=clase)
+
+# Eliminar una clase
+@app.route('/config/clases/delete/<int:class_id>', methods=['POST'])
+@login_required
+def delete_clase(class_id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM classes WHERE id = ?", (class_id,))
+    conn.commit()
+    conn.close()
+    flash("Clase eliminada.", "warning")
+    return redirect(url_for('config_clases'))
+
+# Configuración de Subclases
+@app.route('/config/subclasses', methods=['GET', 'POST'])
+@login_required
+def config_subclasses():
+    conn = get_db_connection()
+    if request.method == 'POST':
+        class_id = request.form.get('class_id')
+        name = request.form.get('name')
+        if class_id and name:
+            conn.execute("INSERT INTO subclasses (class_id, name) VALUES (?, ?)", (class_id, name))
+            conn.commit()
+            flash("Subclase creada exitosamente.", "success")
+        else:
+            flash("Debe seleccionar una clase y escribir el nombre de la subclase.", "warning")
+        conn.close()
+        return redirect(url_for('config_subclasses'))
+    else:
+        # Para el formulario, se listan todas las clases
+        conn = get_db_connection()
+        classes = conn.execute("SELECT * FROM classes").fetchall()
+        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+        conn.close()
+        return render_template('config_subclasses.html', classes=classes, subclasses=subclasses)
+
+# Editar una subclase
+@app.route('/config/subclasses/edit/<int:subclass_id>', methods=['GET', 'POST'])
+@login_required
+def edit_subclass(subclass_id):
+    conn = get_db_connection()
+    subclass = conn.execute("SELECT * FROM subclasses WHERE id = ?", (subclass_id,)).fetchone()
+    if subclass is None:
+        conn.close()
+        flash("Subclase no encontrada.", "danger")
+        return redirect(url_for('config_subclasses'))
+    
+    if request.method == 'POST':
+        new_name = request.form.get('name')
+        new_class_id = request.form.get('class_id')
+        if not new_name or not new_class_id:
+            flash("Todos los campos son obligatorios.", "warning")
+        else:
+            conn.execute("UPDATE subclasses SET name = ?, class_id = ? WHERE id = ?", (new_name, new_class_id, subclass_id))
+            conn.commit()
+            flash("Subclase actualizada exitosamente.", "success")
+        conn.close()
+        return redirect(url_for('config_subclasses'))
+    conn.close()
+    return render_template('edit_subclass.html', subclass=subclass)
+
+# Eliminar una subclase
+@app.route('/config/subclasses/delete/<int:subclass_id>', methods=['POST'])
+@login_required
+def delete_subclass(subclass_id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM subclasses WHERE id = ?", (subclass_id,))
+    conn.commit()
+    conn.close()
+    flash("Subclase eliminada.", "warning")
+    return redirect(url_for('config_subclasses'))
+
+# Configuración de Estatus
+@app.route('/config/statuses', methods=['GET', 'POST'])
+@login_required
+def config_statuses():
+    conn = get_db_connection()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        if name:
+            conn.execute("INSERT INTO statuses (name) VALUES (?)", (name,))
+            conn.commit()
+            flash("Estatus agregado exitosamente.", "success")
+        else:
+            flash("El nombre del estatus es obligatorio.", "warning")
+        conn.close()
+        return redirect(url_for('config_statuses'))
+    else:
+        statuses = conn.execute("SELECT * FROM statuses").fetchall()
+        conn.close()
+        return render_template('config_statuses.html', statuses=statuses)
+    
+    # Editar un estatus
+@app.route('/config/statuses/edit/<int:status_id>', methods=['GET', 'POST'])
+@login_required
+def edit_status(status_id):
+    conn = get_db_connection()
+    status = conn.execute("SELECT * FROM statuses WHERE id = ?", (status_id,)).fetchone()
+    if status is None:
+        conn.close()
+        flash("Estatus no encontrado.", "danger")
+        return redirect(url_for('config_statuses'))
+    
+    if request.method == 'POST':
+        new_name = request.form.get('name')
+        if not new_name:
+            flash("El nombre no puede estar vacío.", "warning")
+        else:
+            conn.execute("UPDATE statuses SET name = ? WHERE id = ?", (new_name, status_id))
+            conn.commit()
+            flash("Estatus actualizado exitosamente.", "success")
+        conn.close()
+        return redirect(url_for('config_statuses'))
+    conn.close()
+    return render_template('edit_status.html', status=status)
+
+# Eliminar un estatus
+@app.route('/config/statuses/delete/<int:status_id>', methods=['POST'])
+@login_required
+def delete_status(status_id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM statuses WHERE id = ?", (status_id,))
+    conn.commit()
+    conn.close()
+    flash("Estatus eliminado.", "warning")
+    return redirect(url_for('config_statuses'))
+    
 # ======================================================
 # BLOQUE FINAL: Inicia la APLICACIÓN.
 # ======================================================

@@ -3,6 +3,7 @@
 {% block content %}
 <h2>Ingresar Activos</h2>
 <form action="{{ url_for('assets') }}" method="POST">
+    <!-- Campos existentes -->
     <div class="form-group">
         <label for="asset_name">Nombre del Activo:</label>
         <input type="text" class="form-control" id="asset_name" name="asset_name" required>
@@ -26,14 +27,40 @@
         <label for="month">Mes (AAAA-MM):</label>
         <input type="text" class="form-control" id="month" name="month" placeholder="2025-04" required>
     </div>
+    <!-- Nuevo: Selección de Clase -->
     <div class="form-group">
-        <label for="clase">Clase de Activo:</label>
-        <input type="text" class="form-control" id="clase" name="clase" required>
+        <label for="class_id">Clase de Activo:</label>
+        <select class="form-control" id="class_id" name="class_id" required>
+            <!-- Estas opciones se pueden cargar desde un endpoint (ver siguiente paso) -->
+            {% for cls in classes %}
+            <option value="{{ cls['id'] }}">{{ cls['name'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <!-- Nuevo: Selección de Subclase -->
+    <div class="form-group">
+        <label for="subclass_id">Subclase:</label>
+        <select class="form-control" id="subclass_id" name="subclass_id" required>
+            <!-- Se llenará dinámicamente vía JavaScript basado en la clase seleccionada -->
+        </select>
     </div>
     <!-- Campo Observaciones -->
     <div class="form-group">
         <label for="observaciones">Observaciones:</label>
         <input type="text" class="form-control" id="observaciones" name="observaciones" placeholder="(Opcional)">
+    </div>
+    <!-- Atributos adicionales (ejemplo: rendimiento, plazo, fecha de pago) -->
+    <div class="form-group">
+        <label for="rendimiento">Rendimiento (%):</label>
+        <input type="number" step="any" class="form-control" id="rendimiento" name="rendimiento" placeholder="Opcional">
+    </div>
+    <div class="form-group">
+        <label for="plazo_vencimiento">Plazo de Vencimiento (meses):</label>
+        <input type="number" class="form-control" id="plazo_vencimiento" name="plazo_vencimiento" placeholder="Opcional">
+    </div>
+    <div class="form-group">
+        <label for="fecha_pago">Fecha de Pago (AAAA-MM-DD):</label>
+        <input type="text" class="form-control" id="fecha_pago" name="fecha_pago" placeholder="Opcional">
     </div>
     <button type="submit" class="btn btn-primary">Guardar Activo</button>
 </form>

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Configuración de Catálogos{% endblock %}
+{% block content %}
+<h2>Configuración de Catálogos</h2>
+<ul>
+    <li><a href="{{ url_for('config_clases') }}">Gestionar Clases</a></li>
+    <li><a href="{{ url_for('config_subclasses') }}">Gestionar Subclases</a></li>
+    <li><a href="{{ url_for('config_statuses') }}">Gestionar Estatus</a></li>
+</ul>
+{% endblock %}

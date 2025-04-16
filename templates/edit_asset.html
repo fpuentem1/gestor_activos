@@ -30,22 +30,22 @@
         <label for="clase">Clase de Activo:</label>
         <input type="text" class="form-control" id="clase" name="clase" value="{{ asset['clase'] }}" required>
     </div>
-    <!-- Campo Observaciones: Aquí el usuario puede seleccionar entre opciones o escribir texto -->
+    <!-- Nuevo: Campo para estado -->
     <div class="form-group">
-        <label for="observaciones">Observaciones (para marcar estado o eliminar):</label>
-        <select class="form-control" id="observaciones" name="observaciones">
-            <option value="">(Ninguno)</option>
-            <option value="Liquidado" {% if asset['observaciones'] == "Liquidado" %}selected{% endif %}>Liquidado</option>
-            <option value="Transladado" {% if asset['observaciones'] == "Transladado" %}selected{% endif %}>Transladado</option>
-            <option value="Integrado a otro activo" {% if asset['observaciones'] == "Integrado a otro activo" %}selected{% endif %}>Integrado a otro activo</option>
-            <option value="Perdido" {% if asset['observaciones'] == "Perdido" %}selected{% endif %}>Perdido</option>
-            <option value="eliminar">Eliminar</option>
+        <label for="estado">Estado:</label>
+        <select class="form-control" id="estado" name="estado" required>
+            <option value="activo" {% if asset['estado'] == 'activo' %}selected{% endif %}>Activo</option>
+            <option value="liquidado" {% if asset['estado'] == 'liquidado' %}selected{% endif %}>Liquidado</option>
+            <option value="trasladado" {% if asset['estado'] == 'trasladado' %}selected{% endif %}>Trasladado</option>
+            <option value="integrado" {% if asset['estado'] == 'integrado' %}selected{% endif %}>Integrado a otro activo</option>
+            <option value="perdido" {% if asset['estado'] == 'perdido' %}selected{% endif %}>Perdido</option>
         </select>
     </div>
     <div class="form-group">
-        <label>Fecha de Ingreso:</label>
-        <p>{{ asset['fecha_ingreso'] }}</p>
+        <label for="observaciones">Observaciones:</label>
+        <input type="text" class="form-control" id="observaciones" name="observaciones" value="{{ asset['observaciones'] }}" placeholder="(Opcional)">
     </div>
+    <!-- Los demás campos que necesites... -->
     <button type="submit" class="btn btn-primary">Actualizar Activo</button>
 </form>
 <a href="{{ url_for('assets_list') }}" class="btn btn-secondary mt-3">Volver a la Lista de Activos</a>
