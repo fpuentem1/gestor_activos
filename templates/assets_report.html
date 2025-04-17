@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Activos{% endblock %}
+{% block content %}
+  <h2>Distribución de Activos por Moneda</h2>
+  {{ chart_html|safe }}
+{% endblock %}

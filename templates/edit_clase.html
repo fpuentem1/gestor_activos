@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Editar Clase{% endblock %}
+{% block content %}
+  <h2>Editar Clase</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label for="name">Nombre de la Clase</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ clase['name'] }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{{ url_for('config_clases') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+{% endblock %}
