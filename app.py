@@ -211,7 +211,19 @@ def assets():
 def assets_list():
     portfolio_id = session.get('portfolio_id', 'default')
     conn = get_db_connection()
-    assets = conn.execute('SELECT * FROM assets WHERE portfolio_id = ?', (portfolio_id,)).fetchall()
+    assets = conn.execute("""
+        SELECT 
+            a.*,
+            c.name  AS class_name,
+            sc.name AS subclass_name,
+            st.name AS status_name
+        FROM assets a
+        LEFT JOIN classes    c  ON a.class_id    = c.id
+        LEFT JOIN subclasses sc ON a.subclass_id = sc.id
+        LEFT JOIN statuses   st ON a.estado      = st.id
+        WHERE a.portfolio_id = ?
+        ORDER BY a.id
+    """, (portfolio_id,)).fetchall()
     conn.close()
     return render_template('assets_list.html', assets=assets)
 

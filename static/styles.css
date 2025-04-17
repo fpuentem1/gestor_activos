@@ -32,3 +32,32 @@ table.dataTable tbody td:nth-child(2) {
 .dataTables_wrapper {
     overflow-x: auto;
 }
+/* === Ajustes de espacio vertical === */
+
+/* Reduce el interlineado general */
+body {
+    line-height: 1.3;
+  }
+  
+  /* Acorta márgenes de títulos */
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Disminuye el espacio entre grupos de formulario */
+  .form-group {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Tablas: menos padding en celdas */
+  .table th,
+  .table td {
+    padding: 0.3rem 0.5rem;
+  }
+  
+  /* Botones pequeños: menos padding y fuente más compacta */
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+  }

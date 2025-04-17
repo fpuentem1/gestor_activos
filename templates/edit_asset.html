@@ -32,19 +32,53 @@
     </div>
     <!-- Nuevo: Campo para estado -->
     <div class="form-group">
-        <label for="estado">Estado:</label>
-        <select class="form-control" id="estado" name="estado" required>
-            <option value="activo" {% if asset['estado'] == 'activo' %}selected{% endif %}>Activo</option>
-            <option value="liquidado" {% if asset['estado'] == 'liquidado' %}selected{% endif %}>Liquidado</option>
-            <option value="trasladado" {% if asset['estado'] == 'trasladado' %}selected{% endif %}>Trasladado</option>
-            <option value="integrado" {% if asset['estado'] == 'integrado' %}selected{% endif %}>Integrado a otro activo</option>
-            <option value="perdido" {% if asset['estado'] == 'perdido' %}selected{% endif %}>Perdido</option>
+        <label for="class_id">Clase:</label>
+        <select id="class_id" name="class_id" class="form-control">
+          {% for cls in classes %}
+            <option value="{{ cls.id }}"
+              {% if cls.id == asset.class_id %}selected{% endif %}>
+              {{ cls.name }}
+            </option>
+          {% endfor %}
         </select>
-    </div>
-    <div class="form-group">
-        <label for="observaciones">Observaciones:</label>
-        <input type="text" class="form-control" id="observaciones" name="observaciones" value="{{ asset['observaciones'] }}" placeholder="(Opcional)">
-    </div>
+      </div>
+      <div class="form-group">
+        <label for="subclass_id">Subclase:</label>
+        <select id="subclass_id" name="subclass_id" class="form-control">
+          {% for sc in subclasses %}
+            <option value="{{ sc.id }}"
+              {% if sc.id == asset.subclass_id %}selected{% endif %}>
+              {{ sc.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="estado">Estatus:</label>
+        <select id="estado" name="estado" class="form-control">
+          {% for st in statuses %}
+            <option value="{{ st.id }}"
+              {% if st.id == asset.estado %}selected{% endif %}>
+              {{ st.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>      
+
+      <script>
+        // Cuando cambies la clase, recarga subclases
+        $(function(){
+          $("#class_id").change(function(){
+            let cid = $(this).val();
+            $.getJSON("/api/subclasses/" + cid, function(data){
+              let $sub = $("#subclass_id").empty();
+              $.each(data, function(i, sc){
+                $sub.append($("<option>").val(sc.id).text(sc.name));
+              });
+            });
+          });
+        });
+      </script>      
     <!-- Los demás campos que necesites... -->
     <button type="submit" class="btn btn-primary">Actualizar Activo</button>
 </form>

@@ -16,7 +16,17 @@ conn.execute("""
         observaciones TEXT,
         fecha_ingreso TEXT,
         portfolio_id TEXT DEFAULT 'default',
-        estado TEXT DEFAULT 'activo'
+        estado TEXT DEFAULT 'activo',
+        class_id INTEGER,
+        subclass_id INTEGER
+    );
+""")
+
+# Crear tabla exchange_rate si no existe
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS exchange_rate (
+        month TEXT PRIMARY KEY,
+        rate REAL
     );
 """)
 
