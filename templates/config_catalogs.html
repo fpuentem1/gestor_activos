@@ -1,13 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Configuración de Catálogos{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h2>Configuración de Catálogos</h2>
-    <!-- Grupo de botones para la Configuración, usando la misma línea gráfica que el resto -->
-    <div class="btn-group mb-3" role="group" aria-label="Configuración de Catálogos">
-        <a href="{{ url_for('config_clases') }}" class="btn btn-primary">Gestión de Clases</a>
-        <a href="{{ url_for('config_subclasses') }}" class="btn btn-primary">Gestión de Subclases</a>
-        <a href="{{ url_for('config_statuses') }}" class="btn btn-primary">Gestión de Estatus</a>
-    </div>
-</div>
+  <h2>Configuración de Catálogos</h2>
+  <div class="list-group">
+    <a href="{{ url_for('config_clases') }}"    class="list-group-item list-group-item-action">Gestión de Clases</a>
+    <a href="{{ url_for('config_subclasses') }}" class="list-group-item list-group-item-action">Gestión de Subclases</a>
+    <a href="{{ url_for('config_statuses') }}"   class="list-group-item list-group-item-action">Gestión de Estatus</a>
+  </div>
 {% endblock %}

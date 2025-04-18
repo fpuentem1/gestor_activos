@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Editar Subclase{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Editar Subclase</h2>
+  <form method="POST" action="{{ url_for('edit_subclass', subclass_id=subclass['id']) }}">
+    <div class="form-group">
+      <label for="class_id">Clase de Activo</label>
+      <select name="class_id" id="class_id" class="form-control" required>
+        <option value="">-- Selecciona una clase --</option>
+        {% for cls in classes %}
+        <option value="{{ cls['id'] }}"
+          {% if cls['id'] == subclass['class_id'] %}selected{% endif %}>
+          {{ cls['name'] }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="name">Nombre de la Subclase</label>
+      <input type="text" name="name" id="name" class="form-control"
+             value="{{ subclass['name'] }}" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{{ url_for('config_subclasses') }}" class="btn btn-secondary ml-2">
+      Cancelar
+    </a>
+  </form>
+</div>
+{% endblock %}

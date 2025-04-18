@@ -1,46 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Configuración - Subclases{% endblock %}
+{% block title %}Gestión de Subclases{% endblock %}
+
 {% block content %}
-<h2>Configurar Subclases</h2>
-<form method="POST" action="{{ url_for('config_subclasses') }}">
-    <div class="form-group">
-        <label for="class_id">Seleccione la Clase:</label>
-        <select class="form-control" name="class_id" id="class_id" required>
-            {% for cls in classes %}
-                <option value="{{ cls['id'] }}">{{ cls['name'] }}</option>
-            {% endfor %}
-        </select>
+<div class="container mt-4">
+  <h2>Gestión de Subclases</h2>
+
+  <!-- Formulario para crear nueva subclase -->
+  <form method="POST" action="{{ url_for('config_subclasses') }}" class="form-inline mb-3">
+    <div class="form-group mr-2">
+      <label for="class_id" class="mr-2">Clase:</label>
+      <select id="class_id" name="class_id" class="form-control" required>
+        <option value="">-- Selecciona clase --</option>
+        {% for cls in classes %}
+        <option value="{{ cls.id }}">{{ cls.name }}</option>
+        {% endfor %}
+      </select>
     </div>
-    <div class="form-group">
-        <label for="name">Nombre de la Subclase:</label>
-        <input type="text" class="form-control" name="name" id="name" required>
+    <div class="form-group mr-2">
+      <input type="text" name="name" class="form-control" placeholder="Nueva subclase" required>
     </div>
     <button type="submit" class="btn btn-primary">Agregar Subclase</button>
-</form>
-<hr>
-<h3>Subclases existentes</h3>
-<table class="table table-bordered">
+  </form>
+
+  <!-- Tabla de subclases existentes -->
+  <table class="table table-striped">
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Clase</th>
-            <th>Subclase</th>
-        </tr>
+      <tr>
+        <th style="width: 5%;">ID</th>
+        <th>Clase (ID)</th>
+        <th>Nombre de la Subclase</th>
+        <th style="width: 25%;">Acciones</th>
+      </tr>
     </thead>
     <tbody>
-        {% for sub in subclasses %}
-            <tr>
-                <td>{{ sub['id'] }}</td>
-                <td>
-                    {% for cls in classes %}
-                        {% if cls['id'] == sub['class_id'] %}
-                            {{ cls['name'] }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
-                <td>{{ sub['name'] }}</td>
-            </tr>
-        {% endfor %}
+      {% for sub in subclasses %}
+      <tr>
+        <td>{{ sub.id }}</td>
+        <td>{{ sub.class_id }}</td>
+        <td>{{ sub.name }}</td>
+        <td>
+          <a href="{{ url_for('edit_subclass', subclass_id=sub.id) }}"
+             class="btn btn-sm btn-secondary">Editar</a>
+          <form action="{{ url_for('delete_subclass', subclass_id=sub.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('¿Eliminar la subclase “{{ sub.name }}”?');">
+              Eliminar
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+</div>
 {% endblock %}

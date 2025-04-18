@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Editar Estatus{% endblock %}
+{% block content %}
+  <h2>Editar Estatus</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label for="name">Nombre del Estatus</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ status['name'] }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{{ url_for('config_statuses') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+{% endblock %}

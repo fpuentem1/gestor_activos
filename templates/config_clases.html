@@ -1,21 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Gestionar Clases{% endblock %}
+{% block title %}Gestión de Clases{% endblock %}
+
 {% block content %}
-<h2>Gestionar Clases</h2>
-<form action="{{ url_for('config_clases') }}" method="POST">
-    <div class="form-group">
-        <label for="name">Nombre de la Clase:</label>
-        <input type="text" class="form-control" id="name" name="name" required>
+<div class="container mt-4">
+  <h2>Gestión de Clases</h2>
+
+  <!-- Formulario para crear nueva clase -->
+  <form method="POST" action="{{ url_for('config_clases') }}" class="form-inline mb-3">
+    <div class="form-group mr-2">
+      <input type="text" name="name" class="form-control" placeholder="Nueva clase" required>
     </div>
     <button type="submit" class="btn btn-primary">Agregar Clase</button>
-</form>
-<hr>
-<h3>Clases existentes</h3>
-<ul>
-    {% for cls in classes %}
-    <li>{{ cls['name'] }}</li>
-    {% else %}
-    <li>No hay clases registradas.</li>
-    {% endfor %}
-</ul>
+  </form>
+
+  <!-- Tabla de clases existentes -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th style="width: 10%;">ID</th>
+        <th>Nombre de la Clase</th>
+        <th style="width: 25%;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cls in classes %}
+      <tr>
+        <td>{{ cls['id'] }}</td>
+        <td>{{ cls['name'] }}</td>
+        <td>
+          <a href="{{ url_for('edit_clase', class_id=cls['id']) }}"
+             class="btn btn-sm btn-secondary">Editar</a>
+          <form action="{{ url_for('delete_clase', class_id=cls['id']) }}"
+                method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('¿Eliminar la clase {{ cls['name'] }}?');">
+              Eliminar
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

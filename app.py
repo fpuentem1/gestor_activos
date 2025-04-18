@@ -691,6 +691,7 @@ def config_clases():
         return redirect(url_for('config_clases'))
     else:
         classes = conn.execute("SELECT * FROM classes").fetchall()
+        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
         conn.close()
         return render_template('config_clases.html', classes=classes)
 
@@ -747,7 +748,7 @@ def config_subclasses():
         return redirect(url_for('config_subclasses'))
     else:
         # Para el formulario, se listan todas las clases
-        conn = get_db_connection()
+        classes = conn = get_db_connection()
         classes = conn.execute("SELECT * FROM classes").fetchall()
         subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
         conn.close()
@@ -758,25 +759,32 @@ def config_subclasses():
 @login_required
 def edit_subclass(subclass_id):
     conn = get_db_connection()
+    # 1. Carga la subclase a editar
     subclass = conn.execute("SELECT * FROM subclasses WHERE id = ?", (subclass_id,)).fetchone()
     if subclass is None:
         conn.close()
         flash("Subclase no encontrada.", "danger")
         return redirect(url_for('config_subclasses'))
-    
+
     if request.method == 'POST':
         new_name = request.form.get('name')
         new_class_id = request.form.get('class_id')
         if not new_name or not new_class_id:
             flash("Todos los campos son obligatorios.", "warning")
         else:
-            conn.execute("UPDATE subclasses SET name = ?, class_id = ? WHERE id = ?", (new_name, new_class_id, subclass_id))
+            conn.execute(
+                "UPDATE subclasses SET name = ?, class_id = ? WHERE id = ?",
+                (new_name, new_class_id, subclass_id)
+            )
             conn.commit()
             flash("Subclase actualizada exitosamente.", "success")
-        conn.close()
-        return redirect(url_for('config_subclasses'))
+            conn.close()
+            return redirect(url_for('config_subclasses'))
+    
+    # 2. Si es GET (o POST con error), necesitamos la lista de clases para el dropdown
+    classes = conn.execute("SELECT * FROM classes").fetchall()
     conn.close()
-    return render_template('edit_subclass.html', subclass=subclass)
+    return render_template('edit_subclass.html', subclass=subclass, classes=classes)
 
 # Eliminar una subclase
 @app.route('/config/subclasses/delete/<int:subclass_id>', methods=['POST'])
@@ -788,6 +796,7 @@ def delete_subclass(subclass_id):
     conn.close()
     flash("Subclase eliminada.", "warning")
     return redirect(url_for('config_subclasses'))
+
 
 # Configuración de Estatus
 @app.route('/config/statuses', methods=['GET', 'POST'])
