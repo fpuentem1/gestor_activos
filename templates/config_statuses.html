@@ -1,30 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Configuración - Estatus{% endblock %}
+{% block title %}Gestión de Estatus{% endblock %}
 {% block content %}
-<h2>Configurar Estatus</h2>
-<form method="POST" action="{{ url_for('config_statuses') }}">
-    <div class="form-group">
-        <label for="name">Nombre del Estatus:</label>
-        <input type="text" class="form-control" name="name" id="name" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Agregar Estatus</button>
-</form>
-<hr>
-<h3>Estatus existentes</h3>
-<table class="table table-bordered">
+  <h2>Gestión de Estatus</h2>
+  <form method="POST" class="form-inline mb-3">
+    <input type="text" name="name" class="form-control mr-2" placeholder="Nuevo estatus" required>
+    <button type="submit" class="btn btn-primary">Agregar</button>
+  </form>
+
+  <table class="table table-bordered">
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Estatus</th>
-        </tr>
+      <tr><th>ID</th><th>Estatus</th><th>Acciones</th></tr>
     </thead>
     <tbody>
-        {% for status in statuses %}
-            <tr>
-                <td>{{ status['id'] }}</td>
-                <td>{{ status['name'] }}</td>
-            </tr>
-        {% endfor %}
+      {% for st in statuses %}
+      <tr>
+        <td>{{ st['id'] }}</td>
+        <td>{{ st['name'] }}</td>
+        <td>
+          <a href="{{ url_for('edit_status', status_id=st['id']) }}" class="btn btn-sm btn-warning">Editar</a>
+          <form action="{{ url_for('delete_status', status_id=st['id']) }}" method="post" style="display:inline;">
+            <button class="btn btn-sm btn-danger" onclick="return confirm('Eliminar estatus?');">Borrar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
 {% endblock %}
