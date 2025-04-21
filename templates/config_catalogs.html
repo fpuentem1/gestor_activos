@@ -1,10 +1,147 @@
 {% extends "base.html" %}
 {% block title %}Configuración de Catálogos{% endblock %}
+
 {% block content %}
+<div class="container mt-4">
   <h2>Configuración de Catálogos</h2>
-  <div class="list-group">
-    <a href="{{ url_for('config_clases') }}"    class="list-group-item list-group-item-action">Gestión de Clases</a>
-    <a href="{{ url_for('config_subclasses') }}" class="list-group-item list-group-item-action">Gestión de Subclases</a>
-    <a href="{{ url_for('config_statuses') }}"   class="list-group-item list-group-item-action">Gestión de Estatus</a>
+  <div class="row mt-3">
+    <!-- Menú lateral -->
+    <div class="col-md-3">
+      <div class="list-group" id="config-tabs" role="tablist">
+        <a class="list-group-item list-group-item-action active"
+           id="tab-classes" data-toggle="list" href="#pane-classes"
+           role="tab">Gestión de Clases</a>
+        <a class="list-group-item list-group-item-action"
+           id="tab-subclasses" data-toggle="list" href="#pane-subclasses"
+           role="tab">Gestión de Subclases</a>
+        <a class="list-group-item list-group-item-action"
+           id="tab-statuses" data-toggle="list" href="#pane-statuses"
+           role="tab">Gestión de Estatus</a>
+      </div>
+    </div>
+
+    <!-- Panel derecho: cada sección -->
+    <div class="col-md-9">
+      <div class="tab-content" id="config-tabs-content">
+
+        <!-- Clases -->
+        <div class="tab-pane fade show active" id="pane-classes" role="tabpanel">
+          <h4>Clases</h4>
+          <form method="POST" action="{{ url_for('config_clases') }}"
+                class="form-inline mb-3">
+            <input type="text" name="name" class="form-control mr-2"
+                   placeholder="Nueva clase" required>
+            <button type="submit" class="btn btn-primary">Agregar</button>
+          </form>
+          <table class="table table-striped">
+            <thead>
+              <tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              {% for cls in classes %}
+              <tr>
+                <td>{{ cls.id }}</td>
+                <td>{{ cls.name }}</td>
+                <td>
+                  <a href="{{ url_for('edit_clase', class_id=cls.id) }}"
+                     class="btn btn-sm btn-secondary">Editar</a>
+                  <form action="{{ url_for('delete_clase', class_id=cls.id) }}"
+                        method="POST" style="display:inline;">
+                    <button class="btn btn-sm btn-danger"
+                            onclick="return confirm('Eliminar clase {{ cls.name }}?');">
+                      Eliminar
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Subclases -->
+        <div class="tab-pane fade" id="pane-subclasses" role="tabpanel">
+          <h4>Subclases</h4>
+          <form method="POST" action="{{ url_for('config_subclasses') }}"
+                class="form-inline mb-3">
+            <select name="class_id" class="form-control mr-2" required>
+              <option value="">-- Selecciona Clase --</option>
+              {% for cls in classes %}
+              <option value="{{ cls.id }}">{{ cls.name }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="name" class="form-control mr-2"
+                   placeholder="Nueva subclase" required>
+            <button type="submit" class="btn btn-primary">Agregar</button>
+          </form>
+          <table class="table table-striped">
+            <thead>
+              <tr><th>ID</th><th>Clase</th><th>Subclase</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              {% for sub in subclasses %}
+              <tr>
+                <td>{{ sub.id }}</td>
+                <td>
+                  {{ (classes
+                       |selectattr("id","equalto",sub.class_id)
+                       |first).name }}
+                </td>
+                <td>{{ sub.name }}</td>
+                <td>
+                  <a href="{{ url_for('edit_subclass', subclass_id=sub.id) }}"
+                     class="btn btn-sm btn-secondary">Editar</a>
+                  <form action="{{ url_for('delete_subclass', subclass_id=sub.id) }}"
+                        method="POST" style="display:inline;">
+                    <button class="btn btn-sm btn-danger"
+                            onclick="return confirm('Eliminar subclase {{ sub.name }}?');">
+                      Eliminar
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estatus -->
+        <div class="tab-pane fade" id="pane-statuses" role="tabpanel">
+          <h4>Estatus</h4>
+          <form method="POST" action="{{ url_for('config_statuses') }}"
+                class="form-inline mb-3">
+            <input type="text" name="name" class="form-control mr-2"
+                   placeholder="Nuevo estatus" required>
+            <button type="submit" class="btn btn-primary">Agregar</button>
+          </form>
+          <table class="table table-striped">
+            <thead>
+              <tr><th>ID</th><th>Estatus</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              {% for st in statuses %}
+              <tr>
+                <td>{{ st.id }}</td>
+                <td>{{ st.name }}</td>
+                <td>
+                  <a href="{{ url_for('edit_status', status_id=st.id) }}"
+                     class="btn btn-sm btn-secondary">Editar</a>
+                  <form action="{{ url_for('delete_status', status_id=st.id) }}"
+                        method="POST" style="display:inline;">
+                    <button class="btn btn-sm btn-danger"
+                            onclick="return confirm('Eliminar estatus {{ st.name }}?');">
+                      Eliminar
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
   </div>
+</div>
 {% endblock %}

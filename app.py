@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 from database import get_db_connection
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 # Importar Flask-Login
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
@@ -210,22 +211,21 @@ def assets():
 @portfolio_required
 def assets_list():
     portfolio_id = session.get('portfolio_id', 'default')
+
+    # 🔸 Aquí abrimos la conexión
     conn = get_db_connection()
-    assets = conn.execute("""
-        SELECT 
-            a.*,
-            c.name  AS class_name,
-            sc.name AS subclass_name,
-            st.name AS status_name
-        FROM assets a
-        LEFT JOIN classes    c  ON a.class_id    = c.id
-        LEFT JOIN subclasses sc ON a.subclass_id = sc.id
-        LEFT JOIN statuses   st ON a.estado      = st.id
-        WHERE a.portfolio_id = ?
-        ORDER BY a.id
-    """, (portfolio_id,)).fetchall()
+
+    # 🔸 Ejecutamos la consulta y recogemos los resultados
+    assets = conn.execute(
+        "SELECT * FROM assets WHERE portfolio_id = ?",
+        (portfolio_id,)
+    ).fetchall()  # sólo un .fetchall()
+
+    # 🔸 Cerramos la conexión
     conn.close()
-    return render_template('assets_list.html', assets=assets)
+
+    # Le pasamos datetime.now para usarlo como now() en la plantilla
+    return render_template('assets_list.html', assets=assets, now=datetime.now)
 
 # NUEVO ENDPOINT: Actualizar activos del mes actual.
 @app.route('/assets/update_current', methods=['GET', 'POST'])
@@ -254,7 +254,7 @@ def update_current():
         conn.close()
         return render_template('update_current.html', assets=assets, current_month=current_month)
 
-# Edición de activo (incluye campo "observaciones" con opción para eliminar)
+# Edición de activo (incluye selección de clase, subclase y estatus)
 @app.route('/assets/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 @portfolio_required
@@ -263,29 +263,59 @@ def edit_asset(id):
     asset = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
     if asset is None:
         conn.close()
-        return "Asset not found", 404
-
-    if request.method == 'POST':
-        asset_name = request.form.get('asset_name')
-        location = request.form.get('location')
-        amount = float(request.form.get('amount'))
-        currency = request.form.get('currency')
-        month = request.form.get('month')
-        clase = request.form.get('clase')
-        observaciones = request.form.get('observaciones', "")
-        estado = request.form.get('estado', "activo")  # Nuevo: se lee el estado desde el formulario
-
-        conn.execute(
-            'UPDATE assets SET asset_name = ?, location = ?, amount = ?, currency = ?, month = ?, clase = ?, observaciones = ?, estado = ? WHERE id = ?',
-            (asset_name, location, amount, currency, month, clase, observaciones, estado, id)
-        )
-        flash("Activo actualizado.", "success")
-        conn.commit()
-        conn.close()
+        flash("Activo no encontrado.", "danger")
         return redirect(url_for('assets_list'))
 
-    conn.close()
-    return render_template('edit_asset.html', asset=asset)
+    if request.method == 'POST':
+        asset_name   = request.form.get('asset_name')
+        location     = request.form.get('location')
+        try:
+            amount   = float(request.form.get('amount'))
+        except (ValueError, TypeError):
+            flash("El monto debe ser numérico.", "warning")
+            return redirect(url_for('edit_asset', id=id))
+
+        currency     = request.form.get('currency')
+        month        = request.form.get('month')
+        class_id     = request.form.get('class_id')
+        subclass_id  = request.form.get('subclass_id')
+        estado       = request.form.get('estado', 'activo')
+        observaciones= request.form.get('observaciones', "")
+        
+        conn.execute(
+            '''UPDATE assets
+               SET asset_name   = ?,
+                   location     = ?,
+                   amount       = ?,
+                   currency     = ?,
+                   month        = ?,
+                   class_id     = ?,
+                   subclass_id  = ?,
+                   estado       = ?,
+                   observaciones= ?
+             WHERE id = ?''',
+            (asset_name, location, amount, currency, month,
+             class_id, subclass_id, estado, observaciones, id)
+        )
+        conn.commit()
+        conn.close()
+        flash("Activo actualizado correctamente.", "success")
+        return redirect(url_for('assets_list'))
+    else:
+        # —— A partir de aquí, TODAS estas líneas deben tener 8 espacios al inicio:
+        classes    = conn.execute("SELECT * FROM classes").fetchall()
+        subclasses = conn.execute(
+            "SELECT * FROM subclasses WHERE class_id = ?", (asset['class_id'],)
+        ).fetchall()
+        statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+        conn.close()
+        return render_template(
+            'edit_asset.html',
+            asset       = asset,
+            classes     = classes,
+            subclasses  = subclasses,
+            statuses    = statuses
+        )
 
 # Eliminación de activo (con confirmación)
 @app.route('/assets/delete/<int:id>', methods=['POST'])
@@ -332,22 +362,6 @@ def copy_assets():
         ).fetchall()
         conn.close()
         return render_template('copy_assets.html', assets=assets, prev_month=source_month, default_new_month=default_new_month)
-
-# Reporte de activos: Distribución por moneda.
-@app.route('/assets/report')
-@login_required
-def assets_report():
-    conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
-    conn.close()
-    if df.empty:
-        chart_html = "<p>No hay datos para mostrar.</p>"
-    else:
-        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        df_grouped = df.groupby('currency')['amount'].sum().reset_index()
-        fig = px.pie(df_grouped, values='amount', names='currency', title="Distribución de Activos por Moneda")
-        chart_html = fig.to_html(full_html=False)
-    return render_template('assets_report.html', chart_html=chart_html)
 
 # Evolución de activos: Por mes y clase, normalizando a MXN.
 @app.route('/assets/evolution')
@@ -672,7 +686,17 @@ def api_subclasses(class_id):
 @app.route('/config/catalogs')
 @login_required
 def config_catalogs():
-    return render_template('config_catalogs.html')
+    conn       = get_db_connection()
+    classes    = conn.execute("SELECT * FROM classes").fetchall()
+    subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+    statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+    conn.close()
+    return render_template(
+        'config_catalogs.html',
+        classes    = classes,
+        subclasses = subclasses,
+        statuses   = statuses
+    )
 
 # Configuración de Clases
 @app.route('/config/clases', methods=['GET', 'POST'])
@@ -852,7 +876,69 @@ def delete_status(status_id):
     conn.close()
     flash("Estatus eliminado.", "warning")
     return redirect(url_for('config_statuses'))
-    
+
+from datetime import datetime
+
+@app.route('/assets/replicate/<start_month>/<end_month>')
+@login_required
+@portfolio_required
+def replicate_assets(start_month, end_month):
+    # 1) Tomamos el portafolio actual
+    portfolio_id = session.get('portfolio_id', 'default')
+    conn = get_db_connection()
+
+    # 2) Leemos los activos del mes de inicio
+    base_assets = conn.execute(
+        "SELECT * FROM assets WHERE month = ? AND portfolio_id = ?",
+        (start_month, portfolio_id)
+    ).fetchall()
+
+    # 3) Construimos la lista de meses desde start_month hasta end_month
+    try:
+        current = datetime.strptime(start_month, "%Y-%m")
+        end     = datetime.strptime(end_month,   "%Y-%m")
+    except ValueError:
+        flash("Formato de mes inválido. Usa AAAA-MM.", "warning")
+        conn.close()
+        return redirect(url_for('assets_list'))
+
+    months = []
+    while current <= end:
+        months.append(current.strftime("%Y-%m"))
+        current += relativedelta(months=1)
+
+    # 4) Insertamos cada activo en cada mes posterior
+    for m in months[1:]:
+        for a in base_assets:
+            conn.execute(
+                "INSERT INTO assets "
+                "(asset_name, location, amount, currency, month, "
+                "clase, observaciones, fecha_ingreso, "
+                "portfolio_id, estado, class_id, subclass_id) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    a["asset_name"],
+                    a["location"],
+                    a["amount"],
+                    a["currency"],
+                    m,
+                    a["clase"],
+                    a["observaciones"],
+                    datetime.now().strftime("%Y-%m"),
+                    portfolio_id,
+                    a["estado"],
+                    a["class_id"],
+                    a["subclass_id"],
+                )
+            )
+
+    conn.commit()
+    conn.close()
+
+    # 5) Redirigimos con mensaje
+    flash(f"Activos replicados de {start_month} a {end_month}.", "success")
+    return redirect(url_for('assets_list'))
+
 # ======================================================
 # BLOQUE FINAL: Inicia la APLICACIÓN.
 # ======================================================

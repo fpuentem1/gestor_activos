@@ -26,61 +26,71 @@
         <label for="month">Mes (AAAA-MM):</label>
         <input type="text" class="form-control" id="month" name="month" value="{{ asset['month'] }}" required>
     </div>
-    <div class="form-group">
-        <label for="clase">Clase de Activo:</label>
-        <input type="text" class="form-control" id="clase" name="clase" value="{{ asset['clase'] }}" required>
-    </div>
-    <!-- Nuevo: Campo para estado -->
-    <div class="form-group">
-        <label for="class_id">Clase:</label>
-        <select id="class_id" name="class_id" class="form-control">
-          {% for cls in classes %}
-            <option value="{{ cls.id }}"
-              {% if cls.id == asset.class_id %}selected{% endif %}>
-              {{ cls.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="subclass_id">Subclase:</label>
-        <select id="subclass_id" name="subclass_id" class="form-control">
-          {% for sc in subclasses %}
-            <option value="{{ sc.id }}"
-              {% if sc.id == asset.subclass_id %}selected{% endif %}>
-              {{ sc.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="estado">Estatus:</label>
-        <select id="estado" name="estado" class="form-control">
-          {% for st in statuses %}
-            <option value="{{ st.id }}"
-              {% if st.id == asset.estado %}selected{% endif %}>
-              {{ st.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>      
+ <!-- Dropdown de Clase -->
+ <div class="form-group">
+  <label for="class_id">Clase de Activo:</label>
+  <select id="class_id" name="class_id" class="form-control" required>
+    <option value="">-- Selecciona Clase --</option>
+    {% for cls in classes %}
+    <option value="{{ cls['id'] }}"
+            {% if cls['id']==asset['class_id'] %}selected{% endif %}>
+      {{ cls['name'] }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
 
-      <script>
-        // Cuando cambies la clase, recarga subclases
-        $(function(){
-          $("#class_id").change(function(){
-            let cid = $(this).val();
-            $.getJSON("/api/subclasses/" + cid, function(data){
-              let $sub = $("#subclass_id").empty();
-              $.each(data, function(i, sc){
-                $sub.append($("<option>").val(sc.id).text(sc.name));
-              });
-            });
-          });
-        });
-      </script>      
-    <!-- Los demás campos que necesites... -->
-    <button type="submit" class="btn btn-primary">Actualizar Activo</button>
+<!-- Dropdown de Subclase -->
+<div class="form-group">
+  <label for="subclass_id">Subclase:</label>
+  <select id="subclass_id" name="subclass_id" class="form-control" required>
+    <option value="">-- Selecciona Subclase --</option>
+    {% for sub in subclasses %}
+    <option value="{{ sub['id'] }}"
+            {% if sub['id']==asset['subclass_id'] %}selected{% endif %}>
+      {{ sub['name'] }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Dropdown de Estatus -->
+<div class="form-group">
+  <label for="estado">Estatus:</label>
+  <select id="estado" name="estado" class="form-control" required>
+    <option value="">-- Selecciona Estatus --</option>
+    {% for st in statuses %}
+    <option value="{{ st['name'] }}"
+            {% if st['name']==asset['estado'] %}selected{% endif %}>
+      {{ st['name'] }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Botón de envío -->
+<button type="submit" class="btn btn-primary">Guardar Cambios</button>
 </form>
-<a href="{{ url_for('assets_list') }}" class="btn btn-secondary mt-3">Volver a la Lista de Activos</a>
+{% block scripts %}
+<script>
+$(function(){
+function loadSubclasses(classId){
+  if(!classId) return;
+  $.getJSON("/api/subclasses/" + classId, function(data){
+    var $sub = $("#subclass_id").empty()
+      .append($("<option>").text("-- Selecciona Subclase --").val(""));
+    $.each(data, function(_, item){
+      $sub.append(
+        $("<option>").val(item.id).text(item.name)
+      );
+    });
+  });
+}
+// Cuando cambie la clase, recargar subclases
+$("#class_id").change(function(){
+  loadSubclasses($(this).val());
+});
+});
+</script>
+{% endblock %}
 {% endblock %}
