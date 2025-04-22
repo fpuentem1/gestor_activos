@@ -5,6 +5,7 @@ db_path = "assets.db"  # Define el nombre de tu base de datos
 def get_db_connection():
     conn = sqlite3.connect(db_path, timeout=20)  # Usa db_path aquí y agrega timeout opcionalmente
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")  # Habilitar integridad referencial en cada nueva conexión
     return conn
 def init_db():
     conn = get_db_connection()

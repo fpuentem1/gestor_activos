@@ -8,8 +8,8 @@ DB = "assets.db"
 
 def get_months(start, end):
     """Devuelve lista de meses AAAA‑MM desde start hasta end inclusive."""
-    curr = datetime.strptime(start + "-01", "%Y-%m-%d")
-    last = datetime.strptime(end + "-01", "%Y-%m-%d")
+    curr = datetime.strptime(start + "-01", "%Y-%m")
+    last = datetime.strptime(end + "-01", "%Y-%m")
     months = []
     while curr <= last:
         months.append(curr.strftime("%Y-%m"))

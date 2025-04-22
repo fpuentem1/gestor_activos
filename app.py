@@ -1,5 +1,5 @@
 # ======================================================
-# IMPORTS: Coloca estas líneas al inicio del archivo app.py.
+# IMPORTS: 
 # ======================================================
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import json
@@ -82,7 +82,7 @@ from flask import session
 def portfolio_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'portfolio_id' not in session or session['portfolio_id'] == 'default':
+        if 'portfolio_id' not in session:
             flash("Debe seleccionar un portafolio antes de continuar.", "warning")
             return redirect(url_for('portfolios'))
         return f(*args, **kwargs)
@@ -169,65 +169,125 @@ def index():
 @portfolio_required
 def assets():
     if request.method == 'POST':
-        asset_name = request.form.get('asset_name')
-        location = request.form.get('location')
+        # ——— Campos estáticos ———
+        asset_name    = request.form.get('asset_name')
+        location      = request.form.get('location')
+        date_acquired = request.form.get('date_acquired')  # nuevo
+        class_id      = request.form.get('class_id')
+        subclass_id   = request.form.get('subclass_id')
+        observaciones = request.form.get('observaciones', "")
+        portfolio_id  = session.get('portfolio_id', 'default')
+
+        # ——— Campos dinámicos ———
+        month    = request.form.get('month')  # p.ej. "2025-04"
         try:
             amount = float(request.form.get('amount'))
         except (ValueError, TypeError):
             flash("El monto debe ser numérico.", "warning")
             return redirect(url_for('assets'))
-        currency = request.form.get('currency')
-        month = request.form.get('month')
-        class_id = request.form.get('class_id')
-        subclass_id = request.form.get('subclass_id')
-        observaciones = request.form.get('observaciones', "")
-        # Usar solo año-mes para la fecha de ingreso
-        fecha_ingreso = datetime.now().strftime("%Y-%m")
-        portfolio_id = session.get('portfolio_id', 'default')
+        currency  = request.form.get('currency')
+        status_id = request.form.get('status_id')
+
         conn = get_db_connection()
         try:
-            conn.execute(
-                'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id, class_id, subclass_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                (asset_name, location, amount, currency, month, "", observaciones, fecha_ingreso, portfolio_id, class_id, subclass_id)
+            # 1) Insertar en tabla assets (sólo datos estáticos)
+            cursor = conn.execute(
+                '''INSERT INTO assets
+                   (name, location, date_acquired, class_id, subclass_id, portfolio_id, observations)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (asset_name, location, date_acquired, class_id, subclass_id, portfolio_id, observaciones)
             )
-            conn.commit()
-        except Exception as e:
-            flash("Error al insertar activo: " + str(e), "danger")
-            return redirect(url_for('assets'))
+            asset_id = cursor.lastrowid
 
+            # 2) Insertar en tabla asset_values (datos por mes)
+            conn.execute(
+                '''INSERT INTO asset_values
+                   (asset_id, month, amount, currency, status_id)
+                   VALUES (?, ?, ?, ?, ?)''',
+                (asset_id, month, amount, currency, status_id)
+            )
+
+            conn.commit()
+            flash("Activo creado exitosamente.", "success")
+        except Exception as e:
+            conn.rollback()
+            flash("Error al insertar activo: " + str(e), "danger")
         finally:
             conn.close()
-        return redirect(url_for('assets'))
+
+        return redirect(url_for('assets_list'))
+
     else:
-        # Rama GET: obtener las clases para el dropdown
+        # GET: mostrar formulario. Necesitamos clases y estatus para los dropdowns
         conn = get_db_connection()
-        classes = conn.execute("SELECT * FROM classes").fetchall()
+        classes  = conn.execute("SELECT * FROM classes").fetchall()
+        statuses = conn.execute("SELECT * FROM statuses").fetchall()
         conn.close()
-        return render_template('assets.html', classes=classes)
+        return render_template('assets.html',
+                               classes=classes,
+                               statuses=statuses)
+
+from datetime import datetime
+
     
 # Listado de activos
 @app.route('/assets/list')
 @login_required
 @portfolio_required
 def assets_list():
-    portfolio_id = session.get('portfolio_id', 'default')
+    # — 1) Determinar mes a mostrar (query param o mes actual) —
+    month = request.args.get('month')
+    if not month:
+        from datetime import datetime
+        month = datetime.now().strftime('%Y-%m')
 
-    # 🔸 Aquí abrimos la conexión
+    portfolio_id = session.get('portfolio_id')
+
     conn = get_db_connection()
+    # — 2) Traer assets con sus valores para ese mes —
+    assets = conn.execute("""
+        SELECT
+          a.id,
+          a.name           AS asset_name,
+          a.location,
+          a.date_acquired  AS fecha_ingreso,
+          av.month,
+          av.amount,
+          av.currency,
+          c.name           AS class_name,
+          sc.name          AS subclass_name,
+          s.name           AS status_name
+        FROM assets a
+        JOIN asset_values av  ON a.id = av.asset_id
+        JOIN classes c       ON a.class_id = c.id
+        JOIN subclasses sc   ON a.subclass_id = sc.id
+        LEFT JOIN statuses s ON av.status_id = s.id
+        WHERE av.month = ?
+          AND a.portfolio_id = ?
+        ORDER BY a.name
+    """, (month, portfolio_id)).fetchall()
 
-    # 🔸 Ejecutamos la consulta y recogemos los resultados
-    assets = conn.execute(
-        "SELECT * FROM assets WHERE portfolio_id = ?",
-        (portfolio_id,)
-    ).fetchall()  # sólo un .fetchall()
-
-    # 🔸 Cerramos la conexión
+    # — 3) Generar lista de meses para el dropdown —
+    months = conn.execute("""
+        SELECT DISTINCT month
+        FROM asset_values
+        WHERE asset_id IN (
+            SELECT id FROM assets WHERE portfolio_id = ?
+        )
+        ORDER BY month DESC
+    """, (portfolio_id,)).fetchall()
     conn.close()
 
-    # Le pasamos datetime.now para usarlo como now() en la plantilla
-    return render_template('assets_list.html', assets=assets, now=datetime.now)
+    # — 4) Renderizar exactamente con las variables que ya usas,
+    #    pero agregando 'months' y 'selected_month' —
+    current_month = datetime.now().strftime('%Y-%m')
+    return render_template('assets_list.html',
+                           assets=assets,
+                           months=[m['month'] for m in months],
+                           selected_month=month,
+                           current_month=current_month)
 
-# NUEVO ENDPOINT: Actualizar activos del mes actual.
+# Actualizar activos del mes actual.
 @app.route('/assets/update_current', methods=['GET', 'POST'])
 @login_required
 @portfolio_required
@@ -235,7 +295,7 @@ def update_current():
     current_month = datetime.now().strftime("%Y-%m")
     conn = get_db_connection()
     if request.method == 'POST':
-        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id', 'default'))).fetchall()
+        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id'))).fetchall()
         for asset in assets:
             new_amount = request.form.get(f"amount_{asset['id']}")
             if new_amount:
@@ -250,7 +310,7 @@ def update_current():
         return redirect(url_for('assets_list'))
     else:
         assets = conn.execute("SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
-                                (current_month, session.get('portfolio_id', 'default'))).fetchall()
+                                (current_month, session.get('portfolio_id'))).fetchall()
         conn.close()
         return render_template('update_current.html', assets=assets, current_month=current_month)
 
@@ -267,14 +327,55 @@ def edit_asset(id):
         return redirect(url_for('assets_list'))
 
     if request.method == 'POST':
+     asset = conn.execute(
+        'SELECT * FROM assets WHERE id = ?', (id,)
+    ).fetchone()
+    if asset is None:
+        conn.close()
+        flash("Activo no encontrado.", "danger")
+        return redirect(url_for('assets_list'))        
         asset_name   = request.form.get('asset_name')
         location     = request.form.get('location')
+        val = conn.execute("""
+            SELECT month, amount, currency, status_id
+            FROM asset_values
+            WHERE asset_id = ?
+            ORDER BY month DESC
+            LIMIT 1
+            """, (id,)).fetchone()
+    # Convertimos asset (Row) a dict para agregarle campos nuevos
+    asset = dict(asset)
+
+    if val:
+        asset['month']    = val['month']
+        asset['amount']   = val['amount']
+        asset['currency'] = val['currency']
+        # Buscamos el nombre del estatus
+        st = conn.execute(
+            "SELECT name FROM statuses WHERE id = ?",
+            (val['status_id'],)
+        ).fetchone()
+        asset['estado'] = st['name'] if st else ""
+    else:
+        # Si no hay valor histórico, dejamos campos vacíos
+        asset['month']    = ""
+        asset['amount']   = 0
+        asset['currency'] = ""
+        asset['estado']   = ""
+
         try:
             amount   = float(request.form.get('amount'))
         except (ValueError, TypeError):
             flash("El monto debe ser numérico.", "warning")
             return redirect(url_for('edit_asset', id=id))
-
+            FROM asset_values
+            WHERE asset_id = ?
+            ORDER BY month DESC
+            LIMIT 1
+            """, (id,)).fetchone()
+        
+# Convertimos a dict para poder añadirle campos nuevos
+        asset = dict(asset)       
         currency     = request.form.get('currency')
         month        = request.form.get('month')
         class_id     = request.form.get('class_id')
@@ -337,7 +438,7 @@ def delete_asset(id):
 def copy_assets():
     source_month = datetime.now().strftime("%Y-%m")
     default_new_month = source_month  
-    current_portfolio_id = session.get('portfolio_id', 'default')
+    current_portfolio_id = session.get('portfolio_id')
 
     conn = get_db_connection()
     if request.method == 'POST':
@@ -356,12 +457,28 @@ def copy_assets():
         flash("Proceso de copia completado correctamente para el mes " + new_month, "success")
         return redirect(url_for('assets_list'))
     else:
-        assets = conn.execute(
-            "SELECT * FROM assets WHERE month = ? AND portfolio_id = ?",
-            (source_month, current_portfolio_id)
-        ).fetchall()
-        conn.close()
-        return render_template('copy_assets.html', assets=assets, prev_month=source_month, default_new_month=default_new_month)
+
+# — Traer datos estáticos + valores dinámicos + clase + fecha_ingreso —
+         assets = conn.execute("""
+            SELECT
+                a.id,
+                a.name                AS asset_name,
+                a.location,
+                av.amount             AS amount,
+                av.currency           AS currency,
+                c.name                AS clase,
+                a.date_acquired       AS fecha_ingreso
+            FROM asset_values av
+            JOIN assets a   ON av.asset_id = a.id
+            JOIN classes c  ON a.class_id = c.id
+            WHERE av.month = ? 
+              AND a.portfolio_id = ?
+            ORDER BY a.name
+        """, 
+        (source_month, current_portfolio_id)).fetchall()        return render_template('copy_assets.html',
+                               assets=assets,
+                               prev_month=source_month,
+                               default_new_month=default_new_month)
 
 # Evolución de activos: Por mes y clase, normalizando a MXN.
 @app.route('/assets/evolution')
@@ -439,10 +556,27 @@ def assets_class_comparison():
 @login_required
 def assets_history_view():
     conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
+
+# Traer nombre, mes, monto y moneda desde assets ↔ asset_values
+    sql = """
+    SELECT
+      a.id,
+      a.name       AS asset_name,
+      av.month     AS month,
+      av.amount    AS amount,
+      av.currency  AS currency
+    FROM assets a
+    JOIN asset_values av
+      ON a.id = av.asset_id
+    WHERE a.portfolio_id = ?
+    """"""    
+
+    df = pd.read_sql_query(sql, conn, params=(session.get('portfolio_id'),))
     conn.close()
+
     if df.empty:
         table_html = "<p>No hay datos históricos para mostrar.</p>"
+
     else:
         df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
         df['usd_value'] = df.apply(lambda row: row['amount'] if row['currency'] == 'USD'
@@ -464,10 +598,10 @@ def assets_history_view():
         for m in months:
             html += f"<th>TC: {exchange_rates[m]}</th>"
         html += "</tr>"
-        for asset in pivot.index:
-            html += f"<tr><td>{asset}</td>"
+        for asset_name in pivot.index:
+            html += f"<tr><td>{asset_name}</td>"
             for m in months:
-                val = pivot.loc[asset].get(m, "")
+                val = pivot.loc[asset_name].get(m, "")
                 if val != "" and not pd.isna(val):
                     val_str = "${:,.0f}".format(val)
                 else:
@@ -647,7 +781,7 @@ def select_portfolio(portfolio_id):
 # ==================================================================
 @app.context_processor
 def inject_portfolio():
-    portfolio_id = session.get('portfolio_id', 'default')
+    portfolio_id = session.get('portfolio_id')
     name = "Default"
     conn = get_db_connection()
     row = conn.execute('SELECT name FROM portfolios WHERE id = ?', (portfolio_id,)).fetchone()
@@ -884,7 +1018,7 @@ from datetime import datetime
 @portfolio_required
 def replicate_assets(start_month, end_month):
     # 1) Tomamos el portafolio actual
-    portfolio_id = session.get('portfolio_id', 'default')
+    portfolio_id = session.get('portfolio_id')
     conn = get_db_connection()
 
     # 2) Leemos los activos del mes de inicio

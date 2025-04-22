@@ -1,0 +1,21 @@
+@app.route('/assets/history/edit/<int:history_id>/<int:asset_id>', methods=['POST'])
+@login_required
+@portfolio_required
+def edit_history(history_id, asset_id):
+    c = get_db_connection()
+    month        = request.form['month']
+    amount       = float(request.form['amount'])
+    currency     = request.form['currency']
+    subclass_id  = request.form['subclass_id']
+    estado       = request.form['estado']
+    observaciones= request.form['observaciones']
+    c.execute("""
+      UPDATE asset_history
+         SET month=?, amount=?, currency=?, subclass_id=?, estado=?, observaciones=?
+       WHERE id=?
+    """, (month, amount, currency, subclass_id, estado, observaciones, history_id))
+    c.commit()
+    c.close()
+    flash("Histórico actualizado.", "success")
+    return redirect(url_for('edit_asset', id=asset_id))
+    

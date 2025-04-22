@@ -1,36 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Ingreso de Activos{% endblock %}
+
 {% block content %}
-<h2>Ingresar Activos</h2>
+<h2>Ingresar Activo</h2>
 <form action="{{ url_for('assets') }}" method="POST">
     <!-- Nombre del Activo -->
     <div class="form-group">
         <label for="asset_name">Nombre del Activo:</label>
         <input type="text" class="form-control" id="asset_name" name="asset_name" required>
     </div>
+
     <!-- Ubicación -->
     <div class="form-group">
         <label for="location">Ubicación:</label>
         <input type="text" class="form-control" id="location" name="location">
     </div>
-    <!-- Monto -->
+
+    <!-- Fecha de adquisición -->
     <div class="form-group">
-        <label for="amount">Monto:</label>
-        <input type="number" step="any" class="form-control" id="amount" name="amount" required>
+        <label for="date_acquired">Fecha de adquisición:</label>
+        <input type="date" class="form-control" id="date_acquired" name="date_acquired" required>
     </div>
-    <!-- Moneda -->
-    <div class="form-group">
-        <label for="currency">Moneda:</label>
-        <select class="form-control" id="currency" name="currency">
-            <option value="USD">USD</option>
-            <option value="MXN">MXN</option>
-        </select>
-    </div>
-    <!-- Mes -->
-    <div class="form-group">
-        <label for="month">Mes (AAAA-MM):</label>
-        <input type="text" class="form-control" id="month" name="month" placeholder="2025-04" required>
-    </div>
+
     <!-- Selección de Clase (usando catálogo) -->
     <div class="form-group">
         <label for="class_id">Clase de Activo:</label>
@@ -40,6 +31,7 @@
             {% endfor %}
         </select>
     </div>
+
     <!-- Selección de Subclase (se carga vía JavaScript) -->
     <div class="form-group">
         <label for="subclass_id">Subclase:</label>
@@ -47,12 +39,45 @@
             <!-- Esta lista se llenará automáticamente según la clase seleccionada -->
         </select>
     </div>
+
+    <!-- Mes (para valor dinámico) -->
+    <div class="form-group">
+        <label for="month">Mes (AAAA-MM):</label>
+        <input type="month" class="form-control" id="month" name="month" required>
+    </div>
+
+    <!-- Monto -->
+    <div class="form-group">
+        <label for="amount">Monto:</label>
+        <input type="number" step="any" class="form-control" id="amount" name="amount" required>
+    </div>
+
+    <!-- Moneda -->
+    <div class="form-group">
+        <label for="currency">Moneda:</label>
+        <select class="form-control" id="currency" name="currency" required>
+            <option value="USD">USD</option>
+            <option value="MXN">MXN</option>
+        </select>
+    </div>
+
+    <!-- Estatus -->
+    <div class="form-group">
+        <label for="status_id">Estatus:</label>
+        <select class="form-control" id="status_id" name="status_id" required>
+            {% for s in statuses %}
+            <option value="{{ s['id'] }}">{{ s['name'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
     <!-- Campo Observaciones -->
     <div class="form-group">
         <label for="observaciones">Observaciones:</label>
-        <input type="text" class="form-control" id="observaciones" name="observaciones" placeholder="(Opcional)">
+        <textarea class="form-control" id="observaciones" name="observaciones" placeholder="(Opcional)"></textarea>
     </div>
-    <!-- Campos adicionales (ejemplo: rendimiento, plazo, fecha de pago) -->
+
+    <!-- Campos adicionales (estáticos opcionales) -->
     <div class="form-group">
         <label for="rendimiento">Rendimiento (%):</label>
         <input type="number" step="any" class="form-control" id="rendimiento" name="rendimiento" placeholder="Opcional">
@@ -63,8 +88,9 @@
     </div>
     <div class="form-group">
         <label for="fecha_pago">Fecha de Pago (AAAA-MM-DD):</label>
-        <input type="text" class="form-control" id="fecha_pago" name="fecha_pago" placeholder="Opcional">
+        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" placeholder="Opcional">
     </div>
+
     <button type="submit" class="btn btn-primary">Guardar Activo</button>
 </form>
 {% endblock %}
@@ -91,8 +117,7 @@
       
       // Al cambiar la selección en el dropdown de Clase, actualizar el de Subclase
       $("#class_id").change(function(){
-          var selectedClassId = $(this).val();
-          loadSubclasses(selectedClassId);
+          loadSubclasses($(this).val());
       });
   });
 </script>

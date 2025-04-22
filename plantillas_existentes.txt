@@ -1,3 +1,4 @@
+.DS_Store
 ai_config.html
 assets_ai_advanced.html
 assets_ai.html
@@ -14,10 +15,16 @@ config_subclasses.html
 copy_assets.html
 create_portfolio.html
 edit_asset.html
+edit_clase.html
+edit_history.html
+edit_status.html
+edit_subclass.html
 exchange_rate.html
 help.html
 index.html
 login.html
 monthly_growth.html
 portfolios.html
+Seed_assets.py
+ToDo.md
 update_current.html
