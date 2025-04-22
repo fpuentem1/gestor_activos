@@ -362,21 +362,53 @@ def edit_asset(id):
         flash("Activo actualizado correctamente.", "success")
         return redirect(url_for('assets_list'))
     else:
-        # —— A partir de aquí, TODAS estas líneas deben tener 8 espacios al inicio:
+        # —— Cargar datos dinámicos (último mes registrado) ——
+        # asset es un sqlite3.Row; lo convertimos a dict
+        val = conn.execute("""
+            SELECT month, amount, currency, status_id
+            FROM asset_values
+            WHERE asset_id = ?
+            ORDER BY month DESC
+            LIMIT 1
+        """, (id,)).fetchone()
+
+        asset = dict(asset)  # ahora podemos añadirle campos
+        asset['asset_name'] = asset.get('name', "")  
+
+        if val:
+            asset['month']    = val['month']
+            asset['amount']   = val['amount']
+            asset['currency'] = val['currency']
+            # obtenemos el nombre del estatus
+            st = conn.execute(
+                "SELECT name FROM statuses WHERE id = ?",
+                (val['status_id'],)
+            ).fetchone()
+            asset['estado'] = st['name'] if st else ""
+        else:
+            # si aún no hay valor mensual, dejamos campos vacíos
+            asset['month']    = ""
+            asset['amount']   = 0
+            asset['currency'] = ""
+            asset['estado']   = ""
+
+        # ahora traemos los catálogos para los dropdowns
         classes    = conn.execute("SELECT * FROM classes").fetchall()
         subclasses = conn.execute(
-            "SELECT * FROM subclasses WHERE class_id = ?", (asset['class_id'],)
+            "SELECT * FROM subclasses WHERE class_id = ?",
+            (asset['class_id'],)
         ).fetchall()
         statuses   = conn.execute("SELECT * FROM statuses").fetchall()
         conn.close()
+
         return render_template(
             'edit_asset.html',
-            asset       = asset,
-            classes     = classes,
-            subclasses  = subclasses,
-            statuses    = statuses
+            asset=asset,
+            classes=classes,
+            subclasses=subclasses,
+            statuses=statuses
         )
-
+        
 # Eliminación de activo (con confirmación)
 @app.route('/assets/delete/<int:id>', methods=['POST'])
 @login_required
