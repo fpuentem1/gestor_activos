@@ -1,0 +1,201 @@
+./init_db_advanced.py:27:cursor.execute("INSERT OR IGNORE INTO classes (name) VALUES ('Financiero')")
+./init_db_advanced.py:28:cursor.execute("INSERT OR IGNORE INTO subclasses (class_id, name) VALUES ((SELECT id FROM classes WHERE name='Financiero'), 'Bonos')")
+./init_db_advanced.py:29:cursor.execute("INSERT OR IGNORE INTO subclasses (class_id, name) VALUES ((SELECT id FROM classes WHERE name='Financiero'), 'Acciones')")
+./init_db_advanced.py:30:cursor.execute("INSERT OR IGNORE INTO subclasses (class_id, name) VALUES ((SELECT id FROM classes WHERE name='Financiero'), 'Contrato Private Equity')")
+./env/lib/python3.13/site-packages/pip/_vendor/requests/sessions.py:664:        r"""Sends a DELETE request. Returns :class:`Response` object.
+./env/lib/python3.13/site-packages/pip/_vendor/requests/api.py:149:    r"""Sends a DELETE request.
+./env/lib/python3.13/site-packages/pip/_vendor/typing_extensions.py:2104:          query("SELECT * FROM table")  # ok
+./env/lib/python3.13/site-packages/pip/_vendor/typing_extensions.py:2105:          query(f"SELECT * FROM {input()}")  # not ok
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2268:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 2), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2317:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 2), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2350:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 2), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2381:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, NULL), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2430:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2445:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2461:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2492:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2536:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2569:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 4.5), (3, 2.) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2644:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 2), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2680:            >>> lf_native = duckdb.sql("SELECT * FROM VALUES (1, 1), (3, 4) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2729:            ...     SELECT * FROM VALUES
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2816:            ...     "SELECT * FROM VALUES (1, 'a'), (2, 'b'), (3, 'a') df(a, b)"
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2871:            ...     "SELECT * FROM VALUES (1, 6.0, 'a'), (2, 5.0, 'c'), (NULL, 4.0, 'b') df(a, b, c)"
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2925:            ...     "SELECT * FROM VALUES (1, 'a'), (2, 'b') df(a, b)"
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:2928:            ...     "SELECT * FROM VALUES (1, 'x'), (3, 'y') df(a, c)"
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:3106:            ...     "SELECT * FROM VALUES ('x', 1, 2), ('y', 3, 4), ('z', 5, 6) df(a, b, c)"
+./env/lib/python3.13/site-packages/narwhals/dataframe.py:3145:            ...     "SELECT * FROM VALUES ('x', [1, 2]), ('y', [3, 4]), ('z', [5, 6]) df(a, b)"
+./env/lib/python3.13/site-packages/narwhals/dtypes.py:689:       ...     " SELECT * FROM (VALUES (TIME '12:00:00'), (TIME '14:30:15')) df(t)"
+./env/lib/python3.13/site-packages/narwhals/dtypes.py:713:        ...     "SELECT * FROM (VALUES (BLOB 'test1'), (BLOB 'test2')) AS df(t)"
+./env/lib/python3.13/site-packages/narwhals/_duckdb/dataframe.py:323:            SELECT {",".join(select)}
+./env/lib/python3.13/site-packages/narwhals/expr.py:700:            >>> df_native = duckdb.sql("SELECT * FROM VALUES (5, 50), (10, 100) df(a, b)")
+./env/lib/python3.13/site-packages/narwhals/expr.py:1291:            ...     "SELECT * FROM VALUES (null, CAST('NaN' AS DOUBLE)), (2, 2.) df(a, b)"
+./env/lib/python3.13/site-packages/narwhals/expr.py:1326:            ...     "SELECT * FROM VALUES (null, CAST('NaN' AS DOUBLE)), (2, 2.) df(a, b)"
+./env/lib/python3.13/site-packages/pandas/core/generic.py:3003:        ...    conn.execute(text("SELECT * FROM users")).fetchall()
+./env/lib/python3.13/site-packages/pandas/core/generic.py:3020:        ...    conn.execute(text("SELECT * FROM users")).fetchall()
+./env/lib/python3.13/site-packages/pandas/core/generic.py:3031:        ...    conn.execute(text("SELECT * FROM users")).fetchall()
+./env/lib/python3.13/site-packages/pandas/core/generic.py:3082:        ...   conn.execute(text("SELECT * FROM integers")).fetchall()
+./env/lib/python3.13/site-packages/pandas/io/sql.py:668:    >>> pd.read_sql('SELECT int_column, date_column FROM test_data', conn)
+./env/lib/python3.13/site-packages/pandas/io/sql.py:680:    >>> pd.read_sql('SELECT int_column, date_column FROM test_data',
+./env/lib/python3.13/site-packages/pandas/io/sql.py:693:    ...     pd.read_sql('SELECT int_column FROM test_data', conn)
+./env/lib/python3.13/site-packages/pandas/io/sql.py:2207:            stmt = f"SELECT {select_list} FROM {schema}.{table_name}"
+./env/lib/python3.13/site-packages/pandas/io/sql.py:2209:            stmt = f"SELECT {select_list} FROM {table_name}"
+./env/lib/python3.13/site-packages/pandas/io/sql.py:2541:            f"INSERT INTO {escape(self.name)} ({col_names}) VALUES {wildcards}"
+./env/lib/python3.13/site-packages/pandas/io/gbq.py:179:    >>> sql = "SELECT name FROM table_name WHERE state = 'TX' LIMIT 100;"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:73:            "sqlite": "SELECT * FROM iris WHERE Name=? AND SepalLength=?",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:74:            "mysql": "SELECT * FROM iris WHERE `Name`=%s AND `SepalLength`=%s",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:75:            "postgresql": 'SELECT * FROM iris WHERE "Name"=%s AND "SepalLength"=%s',
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:79:                SELECT * FROM iris WHERE Name=:name AND SepalLength=:length
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:82:                SELECT * FROM iris WHERE
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:86:                SELECT * FROM iris WHERE
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:91:            "sqlite": "SELECT * FROM iris WHERE Name LIKE '%'",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:92:            "mysql": "SELECT * FROM iris WHERE `Name` LIKE '%'",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:93:            "postgresql": "SELECT * FROM iris WHERE \"Name\" LIKE '%'",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:137:        stmt = "INSERT INTO iris VALUES(?, ?, ?, ?, ?)"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:170:            stmt = "INSERT INTO iris VALUES($1, $2, $3, $4, $5)"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:205:    stmt = "CREATE VIEW iris_view AS SELECT * FROM iris"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:268:                INSERT INTO types
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:300:                INSERT INTO types
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:385:    stmt = f"SELECT count(*) AS count_1 FROM {table_name}"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:513:        c = conn.execute("SELECT name FROM sqlite_master WHERE type='view'")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:538:        c = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1093:    iris_frame = read_sql_query("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1095:    iris_frame = pd.read_sql("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1097:    iris_frame = pd.read_sql("SELECT * FROM iris where 0=1", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1112:    iris_frame = concat(read_sql_query("SELECT * FROM iris", conn, chunksize=7))
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1114:    iris_frame = concat(pd.read_sql("SELECT * FROM iris", conn, chunksize=7))
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1116:    iris_frame = concat(pd.read_sql("SELECT * FROM iris where 0=1", conn, chunksize=7))
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1260:        SELECT * FROM test_frame;
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1470:    INSERT INTO {table_name} VALUES
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1474:    SELECT * FROM {table_name};
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1498:INSERT INTO groups VALUES
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1504:SELECT * FROM groups;
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1509:    result = pd.read_sql("SELECT * FROM group_view", sqlite_buildin)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1606:    iris_frame = sql.read_sql_query("SELECT * FROM iris_view", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1617:    query = 'SELECT * FROM iris_view WHERE "SepalLength" < 0.0'
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1694:    result = sql.read_sql("SELECT * FROM test_frame5", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1708:    s2 = sql.read_sql_query("SELECT * FROM test_series", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1721:    result = sql.read_sql_query("SELECT * FROM test_frame_roundtrip", con=conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1751:    result = sql.read_sql_query("SELECT * FROM test_frame_roundtrip", con=conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1760:        iris_results = pandas_sql.execute("SELECT * FROM iris")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1772:    df = sql.read_sql_query("SELECT * FROM types", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1776:    df = sql.read_sql_query("SELECT * FROM types", conn, parse_dates=["DateCol"])
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1784:        "SELECT * FROM types",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1794:    df = sql.read_sql_query("SELECT * FROM types", conn, parse_dates=["IntDateCol"])
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1802:        "SELECT * FROM types", conn, parse_dates={"IntDateCol": "s"}
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1811:        "SELECT * FROM types",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1827:        (sql.read_sql, "SELECT * FROM types", ("sqlalchemy", "fallback")),
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1831:            "SELECT * FROM types",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1882:        "SELECT * FROM types",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1921:    result = sql.read_sql_query("SELECT * FROM test_timedelta", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:1983:    query = "SELECT * FROM test_index_label"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2017:    frame = sql.read_sql_query("SELECT * FROM test_index_label", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2030:    frame = sql.read_sql_query("SELECT * FROM test_index_label", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2037:    frame = sql.read_sql_query("SELECT * FROM test_index_label", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2049:    frame = sql.read_sql_query("SELECT * FROM test_index_label", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2078:        "SELECT * FROM test_multiindex_roundtrip", conn, index_col=["A", "B"]
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2107:        query = 'SELECT "A", "B" FROM test_dtype_argument'
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2109:        query = "SELECT A, B FROM test_dtype_argument"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2281:    res = sql.read_sql_query("SELECT * FROM test_categorical", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2311:        query = 'SELECT * FROM "d1187b08-4943-4c8d-a7f6"'
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2313:        query = "SELECT * FROM `d1187b08-4943-4c8d-a7f6`"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2341:    result = pd.read_sql("SELECT a, b, a +1 as a, c FROM test_table", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2398:    iris_frame1 = sql.read_sql_query("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2399:    iris_frame2 = sql.read_sql("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2429:        sql.read_sql_query("SELECT * FROM other_table", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2530:        query = "SELECT * FROM iris"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2606:            result = sql.read_sql_query("SELECT * FROM test_frame3_legacy;", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2616:        sql.read_sql("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2633:            sql.read_sql("SELECT 1", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2638:    iris_frame1 = sql.read_sql_query("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2639:    iris_frame2 = sql.read_sql("SELECT * FROM iris", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2728:        result = pandasSQL.read_query("SELECT * FROM test_frame_roundtrip")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2745:            iris_results = pandasSQL.execute("SELECT * FROM iris")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2884:    result = sql.read_sql_query("SELECT * FROM test_datetime_tz", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2963:    result = sql.read_sql_query("SELECT * FROM test_datetime", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:2988:    result = sql.read_sql_query("SELECT * FROM test_datetime", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3024:    res = sql.read_sql_query("SELECT * FROM test_time2", sqlite_conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3030:        res = sql.read_sql_query("SELECT * FROM test_time3", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3064:    result = sql.read_sql_query("SELECT * FROM test_nan", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3082:    result = sql.read_sql_query("SELECT * FROM test_nan", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3101:    result = sql.read_sql_query("SELECT * FROM test_nan", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3126:            "SELECT * FROM sqlite_master WHERE type = 'index' "
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3180:        ins_sql = "INSERT INTO test_trans (A,B) VALUES (1, 'blah')"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3193:            res = pandasSQL.read_query("SELECT * FROM test_trans")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3199:            res2 = pandasSQL.read_query("SELECT * FROM test_trans")
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3373:        query = "SELECT test_foo_data FROM test_foo_data"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3744:        "SELECT * FROM test",
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3985:    INSERT INTO person
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:3994:        'SELECT * FROM "person" AS p1 INNER JOIN "person" AS p2 ON p1.id = p2.id;'
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4026:    res = read_sql_query("SELECT * FROM test_date", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4044:    res = read_sql_query("SELECT * FROM test_time", conn)
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4199:    ins = "INSERT INTO test VALUES (%s, %s, %s, %s)"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4220:    ins = "INSERT INTO test VALUES (?, ?, ?, ?)"
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4266:        pandas_sql.execute('INSERT INTO test VALUES("foo", "bar", 1.234)')
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4267:        pandas_sql.execute('INSERT INTO test VALUES("foo", "baz", 2.567)')
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4270:            pandas_sql.execute('INSERT INTO test VALUES("foo", "bar", 7)')
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4288:            pandas_sql.execute('INSERT INTO test VALUES("foo", "bar", 1.234)')
+./env/lib/python3.13/site-packages/pandas/tests/io/test_sql.py:4320:    sql_select = f"SELECT * FROM {table_name}"
+./env/lib/python3.13/site-packages/pyflakes/test/test_other.py:1969:            await db.fetch('SELECT ...')
+./env/lib/python3.13/site-packages/pyflakes/checker.py:1362:    DELETE = FOR = ASYNCFOR = WHILE = WITH = WITHITEM = ASYNCWITH = \
+./import_assets.py:21:            INSERT INTO assets (
+./app.py:101:    row = conn.execute('SELECT rate FROM exchange_rate WHERE month = ?', (month,)).fetchone()
+./app.py:195:                '''INSERT INTO assets
+./app.py:204:                '''INSERT INTO asset_values
+./app.py:223:        classes  = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:224:        statuses = conn.execute("SELECT * FROM statuses").fetchall()
+./app.py:269:        SELECT DISTINCT month
+./app.py:272:            SELECT id FROM assets WHERE portfolio_id = ?
+./app.py:295:        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id'))).fetchall()
+./app.py:301:                    conn.execute("UPDATE assets SET amount = ? WHERE id = ?", (new_amount, asset['id']))
+./app.py:309:        assets = conn.execute("SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
+./app.py:320:    asset_row = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
+./app.py:347:            UPDATE assets
+./app.py:367:            UPDATE asset_values
+./app.py:389:            SELECT month, amount, currency, status_id
+./app.py:405:            st = conn.execute("SELECT name FROM statuses WHERE id = ?", (val['status_id'],)).fetchone()
+./app.py:414:        classes    = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:415:        subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?", (asset['class_id'],)).fetchall()
+./app.py:416:        statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+./app.py:432:    conn.execute('DELETE FROM assets WHERE id = ?', (id,))
+./app.py:454:            asset = conn.execute("SELECT * FROM assets WHERE id = ? AND portfolio_id = ?", (asset_id, current_portfolio_id)).fetchone()
+./app.py:458:                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+./app.py:498:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+./app.py:520:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+./app.py:543:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+./app.py:634:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+./app.py:694:        existing = conn.execute('SELECT * FROM exchange_rate WHERE month = ?', (month,)).fetchone()
+./app.py:696:            conn.execute('UPDATE exchange_rate SET rate = ? WHERE month = ?', (rate, month))
+./app.py:698:            conn.execute('INSERT INTO exchange_rate (month, rate) VALUES (?, ?)', (month, rate))
+./app.py:717:    portfolios = conn.execute('SELECT * FROM portfolios').fetchall()
+./app.py:729:                conn.execute('INSERT INTO portfolios (name) VALUES (?)', (name,))
+./app.py:756:    row = conn.execute('SELECT name FROM portfolios WHERE id = ?', (portfolio_id,)).fetchone()
+./app.py:769:    classes = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:779:    subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?", (class_id,)).fetchall()
+./app.py:793:    classes    = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:794:    subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+./app.py:795:    statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+./app.py:812:            conn.execute("INSERT INTO classes (name) VALUES (?)", (name,))
+./app.py:820:        classes = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:821:        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+./app.py:830:    clase = conn.execute("SELECT * FROM classes WHERE id = ?", (class_id,)).fetchone()
+./app.py:841:            conn.execute("UPDATE classes SET name = ? WHERE id = ?", (new_name, class_id))
+./app.py:854:    conn.execute("DELETE FROM classes WHERE id = ?", (class_id,))
+./app.py:869:            conn.execute("INSERT INTO subclasses (class_id, name) VALUES (?, ?)", (class_id, name))
+./app.py:879:        classes = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:880:        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+./app.py:890:    subclass = conn.execute("SELECT * FROM subclasses WHERE id = ?", (subclass_id,)).fetchone()
+./app.py:903:                "UPDATE subclasses SET name = ?, class_id = ? WHERE id = ?",
+./app.py:912:    classes = conn.execute("SELECT * FROM classes").fetchall()
+./app.py:921:    conn.execute("DELETE FROM subclasses WHERE id = ?", (subclass_id,))
+./app.py:936:            conn.execute("INSERT INTO statuses (name) VALUES (?)", (name,))
+./app.py:944:        statuses = conn.execute("SELECT * FROM statuses").fetchall()
+./app.py:953:    status = conn.execute("SELECT * FROM statuses WHERE id = ?", (status_id,)).fetchone()
+./app.py:964:            conn.execute("UPDATE statuses SET name = ? WHERE id = ?", (new_name, status_id))
+./app.py:977:    conn.execute("DELETE FROM statuses WHERE id = ?", (status_id,))
+./app.py:1011:                    SELECT amount, currency, status_id
+./app.py:1018:                        INSERT OR IGNORE INTO asset_values
+./templates/edit_history.html:13:      UPDATE asset_history
+./templates/Seed_assets.py:31:                    INSERT INTO assets
+./init_db.py:31:    FOREIGN KEY(class_id) REFERENCES classes(id) ON DELETE CASCADE
+./init_db.py:71:    FOREIGN KEY(asset_id)  REFERENCES assets(id)  ON DELETE CASCADE,

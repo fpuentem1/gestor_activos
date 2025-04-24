@@ -1,0 +1,29 @@
+tabla            columna        tipo   
+---------------  -------------  -------
+asset_values     id             INTEGER
+asset_values     asset_id       INTEGER
+asset_values     month          TEXT   
+asset_values     amount         REAL   
+asset_values     currency       TEXT   
+asset_values     status_id      INTEGER
+assets           id             INTEGER
+assets           name           TEXT   
+assets           location       TEXT   
+assets           date_acquired  TEXT   
+assets           class_id       INTEGER
+assets           subclass_id    INTEGER
+assets           portfolio_id   INTEGER
+assets           observations   TEXT   
+classes          id             INTEGER
+classes          name           TEXT   
+exchange_rate    month          TEXT   
+exchange_rate    rate           REAL   
+portfolios       id             INTEGER
+portfolios       name           TEXT   
+sqlite_sequence  name                  
+sqlite_sequence  seq                   
+statuses         id             INTEGER
+statuses         name           TEXT   
+subclasses       id             INTEGER
+subclasses       class_id       INTEGER
+subclasses       name           TEXT   
