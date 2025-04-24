@@ -2,7 +2,10 @@
 {% block title %}Copiar Activos al Nuevo Mes{% endblock %}
 {% block content %}
 <h2>Copiar Activos del Mes {{ prev_month }} al Nuevo Mes</h2>
-<form action="{{ url_for('copy_assets') }}" method="POST">
+<form action="{{ url_for('replicate_assets',
+                         start_month=prev_month,
+                         end_month=default_new_month) }}"
+      method="POST">
     <div class="form-group">
         <label for="new_month">Nuevo Mes (AAAA-MM):</label>
         <input type="text" class="form-control" id="new_month" name="new_month" value="{{ default_new_month }}" required>
