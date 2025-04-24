@@ -1,0 +1,13 @@
+app.py:292:        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id'))).fetchall()
+app.py:306:        assets = conn.execute("SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
+app.py:317:    asset = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
+app.py:414:    conn.execute('DELETE FROM assets WHERE id = ?', (id,))
+app.py:491:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+app.py:513:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+app.py:536:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+app.py:572:    FROM assets a
+app.py:627:    df = pd.read_sql_query("SELECT * FROM assets", conn)
+app.py:298:                    conn.execute("UPDATE assets SET asset_values = ? WHERE id = ?", (new_amount, asset['id']))
+app.py:344:            UPDATE assets
+app.py:195:                '''INSERT INTO assets
+app.py:414:    conn.execute('DELETE FROM assets WHERE id = ?', (id,))

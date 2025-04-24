@@ -229,60 +229,57 @@ def assets():
 
     
 # Listado de activos
+# Listado de Activos por mes (con JOIN a asset_values)
 @app.route('/assets/list')
 @login_required
 @portfolio_required
 def assets_list():
-    # — 1) Determinar mes a mostrar (query param o mes actual) —
-    month = request.args.get('month')
-    if not month:
-        month = datetime.now().strftime('%Y-%m')
+    # Mes a filtrar: por parámetro o default hoy
+    selected_month = request.args.get('month',
+                        datetime.now().strftime("%Y-%m"))
+    # Para marcar “mes actual” en la UI
     current_month = datetime.now().strftime("%Y-%m")
 
-    portfolio_id = session.get('portfolio_id')
     conn = get_db_connection()
-    # — 2) Traer assets con sus valores para ese mes —
+    # 1) Filtrar assets + valores dinámicos + catálogos
     assets = conn.execute("""
         SELECT
           a.id,
-          a.name           AS asset_name,
+          a.name             AS asset_name,
           a.location,
-          a.date_acquired  AS fecha_ingreso,
-          av.month,
-          av.amount,
-          av.currency,
-          c.name           AS class_name,
-          sc.name          AS subclass_name,
-          s.name           AS status_name
-        FROM assets a
-        JOIN asset_values av  ON a.id = av.asset_id
-        JOIN classes c       ON a.class_id = c.id
-        JOIN subclasses sc   ON a.subclass_id = sc.id
-        LEFT JOIN statuses s ON av.status_id = s.id
+          av.amount          AS amount,
+          av.currency        AS currency,
+          c.name             AS class_name,
+          sc.name            AS subclass_name,
+          av.month           AS month,
+          s.name             AS status_name,
+          a.date_acquired    AS fecha_ingreso
+        FROM asset_values av
+        JOIN assets a    ON av.asset_id    = a.id
+        LEFT JOIN classes    c  ON a.class_id    = c.id
+        LEFT JOIN subclasses sc ON a.subclass_id = sc.id
+        LEFT JOIN statuses    s  ON av.status_id = s.id
         WHERE av.month = ?
           AND a.portfolio_id = ?
         ORDER BY a.name
-    """, (month, portfolio_id)).fetchall()
-
-    # — 3) Generar lista de meses para el dropdown —
+    """, (selected_month, session['portfolio_id'])).fetchall()
+    # 2) Recoger meses disponibles para el filtro
     months = conn.execute("""
         SELECT DISTINCT month
-        FROM asset_values
-        WHERE asset_id IN (
-            SELECT id FROM assets WHERE portfolio_id = ?
-        )
-        ORDER BY month DESC
-    """, (portfolio_id,)).fetchall()
+          FROM asset_values av
+          JOIN assets a ON av.asset_id = a.id
+         WHERE a.portfolio_id = ?
+         ORDER BY month DESC
+    """, (session['portfolio_id'],)).fetchall()
     conn.close()
 
-    # — 4) Renderizar exactamente con las variables que ya usas,
-    #    pero agregando 'months' y 'selected_month' —
-    current_month = datetime.now().strftime('%Y-%m')
-    return render_template('assets_list.html',
-                           assets=assets,
-                           months=[m['month'] for m in months],
-                           selected_month=month,
-                           current_month=current_month)
+    return render_template(
+        'assets_list.html',
+        assets=assets,
+        months=[m['month'] for m in months],
+        selected_month=selected_month,
+        current_month=current_month
+    )
 
 # Actualizar activos del mes actual.
 @app.route('/assets/update_current', methods=['GET', 'POST'])
@@ -298,7 +295,7 @@ def update_current():
             if new_amount:
                 try:
                     new_amount = float(new_amount)
-                    conn.execute("UPDATE assets SET amount = ? WHERE id = ?", (new_amount, asset['id']))
+                    conn.execute("UPDATE assets SET asset_values = ? WHERE id = ?", (new_amount, asset['id']))
                 except ValueError:
                     pass
         conn.commit()
@@ -311,118 +308,103 @@ def update_current():
         conn.close()
         return render_template('update_current.html', assets=assets, current_month=current_month)
 
-# Edición de activo (incluye selección de clase, subclase y estatus)
+# Edición de activo (státicos en assets, dinámicos en asset_values)
 @app.route('/assets/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 @portfolio_required
 def edit_asset(id):
     conn = get_db_connection()
-    asset_row = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
-    if asset_row is None:
+    asset = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
+    if not asset:
         conn.close()
         flash("Activo no encontrado.", "danger")
         return redirect(url_for('assets_list'))
 
     if request.method == 'POST':
-        # ——— Campos estáticos ———
-        asset_name    = request.form.get('asset_name')
-        location      = request.form.get('location')
-        date_acquired = request.form.get('date_acquired')
-        class_id      = request.form.get('class_id')
-        subclass_id   = request.form.get('subclass_id')
+        # — STATICOS —
+        asset_name    = request.form['asset_name']
+        location      = request.form['location']
+        date_acquired = request.form['date_acquired']
+        class_id      = request.form['class_id']
+        subclass_id   = request.form['subclass_id']
         observaciones = request.form.get('observaciones', "")
 
-        # ——— Campos dinámicos ———
+        # — DINÁMICOS —
         try:
-            amount = float(request.form.get('amount'))
+            amount    = float(request.form['amount'])
         except (ValueError, TypeError):
             flash("El monto debe ser numérico.", "warning")
             return redirect(url_for('edit_asset', id=id))
-        currency  = request.form.get('currency')
-        month     = request.form.get('month')       # p.ej. "2025-04"
-        status_id = request.form.get('estado')      # debe ser el ID del status
+        currency   = request.form['currency']
+        month      = request.form['month']      # p.ej. "2025-04"
+        status_id  = request.form['estado']     # debe devolver el ID del estatus
 
-        # 1) Actualizar tabla assets (sólo estáticos)
+        # 1) Actualizar campos estáticos en assets
         conn.execute("""
             UPDATE assets
-               SET name          = ?,
-                   location      = ?,
-                   date_acquired = ?,
-                   class_id      = ?,
-                   subclass_id   = ?,
-                   observations  = ?
+               SET name           = ?,
+                   location       = ?,
+                   date_acquired  = ?,
+                   class_id       = ?,
+                   subclass_id    = ?,
+                   observations   = ?
              WHERE id = ?
-        """, (
-            asset_name,
-            location,
-            date_acquired,
-            class_id,
-            subclass_id,
-            observaciones,
-            id
-        ))
+        """, (asset_name, location, date_acquired,
+              class_id, subclass_id, observaciones, id))
 
-        # 2) Actualizar tabla asset_values (el registro de ese mes)
+        # 2) Actualizar o insertar el valor dinámico en asset_values
+        #    Usamos INSERT OR REPLACE para crear si no existía
         conn.execute("""
-            UPDATE asset_values
-               SET amount    = ?,
-                   currency  = ?,
-                   status_id = ?
-             WHERE asset_id = ?
-               AND month    = ?
-        """, (
-            amount,
-            currency,
-            status_id,
-            id,
-            month
-        ))
+            INSERT OR REPLACE INTO asset_values
+                (asset_id, month, amount, currency, status_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (id, month, amount, currency, status_id))
 
         conn.commit()
         conn.close()
         flash("Activo actualizado correctamente.", "success")
         return redirect(url_for('assets_list'))
 
+    # — GET: precargar último valor registrado —
+    val = conn.execute("""
+        SELECT month, amount, currency, status_id
+          FROM asset_values
+         WHERE asset_id = ?
+         ORDER BY month DESC
+         LIMIT 1
+    """, (id,)).fetchone()
+
+    a = dict(asset)  # convertimos a dict para añadir campos
+    a['asset_name'] = asset['name']  # legacy
+    if val:
+        a.update({
+            'month':      val['month'],
+            'amount':     val['amount'],
+            'currency':   val['currency'],
+            'estado':     conn.execute(
+                              "SELECT name FROM statuses WHERE id = ?",
+                              (val['status_id'],)
+                          ).fetchone()['name']
+        })
     else:
-        # —— Cargar datos dinámicos (último mes registrado) ——
-        val = conn.execute("""
-            SELECT month, amount, currency, status_id
-              FROM asset_values
-             WHERE asset_id = ?
-             ORDER BY month DESC
-             LIMIT 1
-        """, (id,)).fetchone()
+        a.update({'month': "", 'amount': 0, 'currency': "", 'estado': ""})
 
-        # convertimos el row de assets a dict y mapeamos nombre
-        asset = dict(asset_row)
-        asset['asset_name']     = asset.get('name', "")
-        asset['fecha_ingreso']  = asset.get('date_acquired', "")
+    # Cargar catálogos
+    classes    = conn.execute("SELECT * FROM classes").fetchall()
+    subclasses = conn.execute(
+        "SELECT * FROM subclasses WHERE class_id = ?",
+        (a['class_id'],)
+    ).fetchall()
+    statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+    conn.close()
 
-        if val:
-            asset['month']    = val['month']
-            asset['amount']   = val['amount']
-            asset['currency'] = val['currency']
-            st = conn.execute("SELECT name FROM statuses WHERE id = ?", (val['status_id'],)).fetchone()
-            asset['estado']   = st['name'] if st else ""
-        else:
-            asset['month']    = ""
-            asset['amount']   = 0
-            asset['currency'] = ""
-            asset['estado']   = ""
-
-        # ahora traemos los catálogos para los dropdowns
-        classes    = conn.execute("SELECT * FROM classes").fetchall()
-        subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?", (asset['class_id'],)).fetchall()
-        statuses   = conn.execute("SELECT * FROM statuses").fetchall()
-        conn.close()
-
-        return render_template(
-            'edit_asset.html',
-            asset=asset,
-            classes=classes,
-            subclasses=subclasses,
-            statuses=statuses
-        )
+    return render_template(
+        'edit_asset.html',
+        asset=a,
+        classes=classes,
+        subclasses=subclasses,
+        statuses=statuses
+    )
         
 # Eliminación de activo (con confirmación)
 @app.route('/assets/delete/<int:id>', methods=['POST'])
@@ -442,50 +424,61 @@ def delete_asset(id):
 @login_required
 @portfolio_required
 def copy_assets():
-    source_month = datetime.now().strftime("%Y-%m")
-    default_new_month = source_month  
-    current_portfolio_id = session.get('portfolio_id')
-
+    src = datetime.now().strftime("%Y-%m")
+    default_new = src
+    pid = session['portfolio_id']
     conn = get_db_connection()
+
     if request.method == 'POST':
-        new_month = request.form.get('new_month').strip()
-        selected_assets = request.form.getlist('asset_ids')
-        for asset_id in selected_assets:
-            asset = conn.execute("SELECT * FROM assets WHERE id = ? AND portfolio_id = ?", (asset_id, current_portfolio_id)).fetchone()
-            if asset:
-                new_fecha = datetime.now().strftime("%Y-%m")
-                conn.execute(
-                    'INSERT INTO assets (asset_name, location, amount, currency, month, clase, observaciones, fecha_ingreso, portfolio_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (asset['asset_name'], asset['location'], asset['amount'], asset['currency'], new_month, asset['clase'], asset['observaciones'], new_fecha, asset['portfolio_id'], asset['estado'])
-                )
+        dest = request.form['new_month'].strip()
+        selected = request.form.getlist('asset_ids')
+        for aid in selected:
+            row = conn.execute("""
+                SELECT amount, currency, status_id
+                  FROM asset_values
+                 WHERE asset_id = ? AND month = ?
+            """, (aid, src)).fetchone()
+            if row:
+                conn.execute("""
+                    INSERT OR IGNORE INTO asset_values
+                        (asset_id, month, amount, currency, status_id)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (aid, dest,
+                      row['amount'],
+                      row['currency'],
+                      row['status_id']))
         conn.commit()
         conn.close()
-        flash("Proceso de copia completado correctamente para el mes " + new_month, "success")
+        flash(f"Activos copiados de {src} a {dest}.", "success")
         return redirect(url_for('assets_list'))
-    else:
-        assets = conn.execute("""
-            SELECT
-                a.id,
-                a.name             AS asset_name,
-                a.location,
-                av.amount          AS amount,
-                av.currency        AS currency,
-                c.name             AS clase,
-                a.date_acquired    AS fecha_ingreso
-            FROM asset_values av
-            JOIN assets a   ON av.asset_id = a.id
-            JOIN classes c  ON a.class_id = c.id
-            WHERE av.month = ?
-              AND a.portfolio_id = ?
-            ORDER BY a.name
-        """, (source_month, current_portfolio_id)).fetchall()
-        conn.close()
-        return render_template(
-            'copy_assets.html',
-            assets=assets,
-            prev_month=source_month,
-            default_new_month=default_new_month
-        )
+
+    # GET: listar para el mes src
+    assets = conn.execute("""
+        SELECT
+          a.id               AS id,
+          a.name             AS asset_name,
+          a.location         AS location,
+          av.amount          AS amount,
+          av.currency        AS currency,
+          c.name             AS clase,
+          a.date_acquired    AS fecha_ingreso
+        FROM asset_values av
+        JOIN assets a
+          ON av.asset_id = a.id
+        LEFT JOIN classes c
+          ON a.class_id = c.id
+        WHERE av.month = ?
+          AND a.portfolio_id = ?
+        ORDER BY a.name
+    """, (src, pid)).fetchall()
+    conn.close()
+
+    return render_template(
+        'copy_assets.html',
+        assets=assets,
+        prev_month=src,
+        default_new_month=default_new
+    )
 
 # Evolución de activos: Por mes y clase, normalizando a MXN.
 @app.route('/assets/evolution')
@@ -984,82 +977,59 @@ def delete_status(status_id):
 @login_required
 @portfolio_required
 def replicate_assets(start_month, end_month):
-    # 1) Conexión y portafolio
-    portfolio_id = session.get('portfolio_id')
+    pid = session['portfolio_id']
     conn = get_db_connection()
 
     if request.method == 'POST':
-        # 2) Construir lista de meses desde start_month hasta end_month
-        try:
-            current = datetime.strptime(start_month, "%Y-%m")
-            end_dt  = datetime.strptime(end_month,   "%Y-%m")
-        except ValueError:
-            flash("Formato de mes inválido. Usa AAAA-MM.", "warning")
-            conn.close()
-            return redirect(url_for('assets_list'))
-
-        months = []
-        while current <= end_dt:
-            months.append(current.strftime("%Y-%m"))
-            current += relativedelta(months=1)
-
-        # 3) Para cada mes (excepto el primero) y cada activo seleccionado, copiar valor
-        selected_assets = request.form.getlist('asset_ids')
-        for m in months[1:]:
-            for asset_id in selected_assets:
-                row = conn.execute("""
-                    SELECT amount, currency, status_id
-                    FROM asset_values
-                    WHERE asset_id = ? AND month = ?
-                """, (asset_id, start_month)).fetchone()
-
-                if row:
-                    conn.execute("""
-                        INSERT OR IGNORE INTO asset_values
-                          (asset_id, month, amount, currency, status_id)
-                        VALUES (?, ?, ?, ?, ?)
-                    """, (
-                        asset_id,
-                        m,
-                        row['amount'],
-                        row['currency'],
-                        row['status_id']
-                    ))
-
+        new_month = request.form['new_month'].strip()
+        selected = request.form.getlist('asset_ids')
+        for aid in selected:
+            row = conn.execute("""
+                SELECT amount, currency, status_id
+                  FROM asset_values
+                 WHERE asset_id = ? AND month = ?
+            """, (aid, start_month)).fetchone()
+            if row:
+                conn.execute("""
+                    INSERT OR IGNORE INTO asset_values
+                        (asset_id, month, amount, currency, status_id)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (aid, new_month,
+                      row['amount'],
+                      row['currency'],
+                      row['status_id']))
         conn.commit()
         conn.close()
-
-        flash(f"Activos replicados de {start_month} a {end_month}.", "success")
+        flash(f"Activos replicados de {start_month} a {new_month}.", "success")
         return redirect(url_for('assets_list'))
 
-    else:
-        # 4) GET: leer los activos del mes origen con los campos que tu template espera
-        base_assets = conn.execute("""
-            SELECT
-                a.id                  AS id,
-                a.name                AS asset_name,
-                a.location            AS location,
-                av.amount             AS amount,
-                av.currency           AS currency,
-                av.status_id          AS status_id,
-                c.name                AS clase,
-                a.date_acquired       AS fecha_ingreso
-            FROM asset_values av
-            JOIN assets a   ON av.asset_id    = a.id
-            LEFT JOIN classes c  ON a.class_id    = c.id
-            WHERE av.month = ?
-              AND a.portfolio_id = ?
-            ORDER BY a.name
-        """, (start_month, portfolio_id)).fetchall()
+    # GET: lista de origen
+    base_assets = conn.execute("""
+        SELECT
+          a.id             AS asset_id,
+          a.name           AS asset_name,
+          a.location,
+          av.amount,
+          av.currency,
+          c.name           AS class_name,
+          sc.name          AS subclass_name,
+          a.date_acquired  AS fecha_ingreso
+        FROM asset_values av
+        JOIN assets a    ON av.asset_id    = a.id
+        LEFT JOIN classes    c  ON a.class_id    = c.id
+        LEFT JOIN subclasses sc ON a.subclass_id = sc.id
+        WHERE av.month = ?
+          AND a.portfolio_id = ?
+        ORDER BY a.name
+    """, (start_month, pid)).fetchall()
+    conn.close()
 
-        conn.close()
-        # 5) Renderizar la tabla de copia
-        return render_template(
-            'copy_assets.html',
-            assets=base_assets,
-            prev_month=start_month,
-            default_new_month=end_month
-        )
+    return render_template(
+        'copy_assets.html',   # ¡reusa la misma plantilla!
+        assets=base_assets,
+        prev_month=start_month,
+        default_new_month=end_month
+    )
         
 # ======================================================
 # BLOQUE FINAL: Inicia la APLICACIÓN.
