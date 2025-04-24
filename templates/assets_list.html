@@ -1,20 +1,21 @@
 {% extends "base.html" %}
-
 {% block title %}Listado de Activos{% endblock %}
 
 {% block content %}
 <h2>Listado de Activos</h2>
+
 <!-- FILTRO POR MES -->
 <form method="get" action="{{ url_for('assets_list') }}" class="form-inline mb-3">
-  <label for="filter">Mes:</label>
+  <label for="filter_month">Mes:</label>
   <input type="month"
-         id="filter"
+         id="filter_month"
          name="month"
          class="form-control mx-2"
          value="{{ selected_month }}">
   <button type="submit" class="btn btn-primary">Ver</button>
 </form>
 
+{% if assets %}
 <div class="table-responsive">
   <table class="table table-striped datatable" style="width:100%">
     <thead>
@@ -46,10 +47,13 @@
         <td>{{ asset['status_name'] or '' }}</td>
         <td>{{ asset['fecha_ingreso'][:7] }}</td>
         <td>
-          <a class="btn btn-sm btn-primary" href="{{ url_for('edit_asset', id=asset['id']) }}">
+          <a class="btn btn-sm btn-primary"
+             href="{{ url_for('edit_asset', id=asset['id']) }}">
             Editar
           </a>
-          <form action="{{ url_for('delete_asset', id=asset['id']) }}" method="POST" style="display:inline;">
+          <form action="{{ url_for('delete_asset', id=asset['id']) }}"
+                method="POST"
+                style="display:inline;">
             <button class="btn btn-sm btn-danger" type="submit"
                     onclick="return confirm('¿Estás seguro de eliminar este activo?');">
               Eliminar
@@ -61,45 +65,44 @@
     </tbody>
   </table>
 </div>
-©
-  <!-- Form de replicación: fijamos la acción usando assets[0]['month'] -->
-{% if assets %}
+
+<!-- Replicación Mes a Mes -->
 <div class="mt-3 mb-5">
-  <!-- Botón que abre el formulario de replicación -->
   <button id="btn-replicate-toggle" class="btn btn-warning mb-2">
     Replicar Activos Mes a Mes
   </button>
 
-  <!-- Form de replicación con action corregido -->
   <form id="form-replicate" class="form-inline" style="display:none;"
-    action="{{ url_for('replicate_assets',
-                       start_month=assets[0]['month'],
-                       end_month=current_month) }}"
-    method="get">
+        action="{{ url_for('replicate_assets',
+                           start_month=selected_month,
+                           end_month=current_month) }}"
+        method="get">
     <div class="form-group mr-2">
       <label for="start_month" class="mr-2">Desde:</label>
       <input type="month" id="start_month" name="start_month"
              class="form-control"
-             value="{{ assets[0]['month'] }}" required>
+             value="{{ selected_month }}" required>
     </div>
     <div class="form-group mr-2">
       <label for="end_month" class="mr-2">Hasta:</label>
       <input type="month" id="end_month" name="end_month"
              class="form-control"
-             value="{{ current_month }}"
+             value="{{ current_month }}" required>
     </div>
     <button type="submit" class="btn btn-warning">Replicar</button>
   </form>
 </div>
-{% else %}
-  <p class="text-muted">No hay activos que replicar en este portafolio.</p>
-{% endif %}
 
 <script>
-  // Alterna la visibilidad del formulario de replicación
-  document.getElementById('btn-replicate-toggle').addEventListener('click', function(){
+  document.getElementById('btn-replicate-toggle').addEventListener('click', function() {
     var f = document.getElementById('form-replicate');
     f.style.display = f.style.display === 'none' ? 'flex' : 'none';
   });
 </script>
+
+{% else %}
+  <p class="text-muted">
+    No hay activos que mostrar para el mes {{ selected_month }}.
+  </p>
+{% endif %}
 {% endblock %}

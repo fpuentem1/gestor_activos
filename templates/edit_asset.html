@@ -1,109 +1,115 @@
 {% extends "base.html" %}
 {% block title %}Editar Activo{% endblock %}
+
 {% block content %}
 <h2>Editar Activo</h2>
-<form action="{{ url_for('edit_asset', id=asset['id']) }}" method="POST">
-    <div class="form-group">
-        <label for="asset_name">Nombre del Activo:</label>
-        <input type="text" class="form-control" id="asset_name" name="asset_name" value="{{ asset['asset_name'] }}" required>
+
+<form method="post" action="{{ url_for('edit_asset', id=asset['id']) }}">
+  <!-- Campos estáticos -->
+  <div class="form-group">
+    <label for="asset_name">Nombre del Activo:</label>
+    <input type="text"
+           class="form-control"
+           id="asset_name"
+           name="asset_name"
+           value="{{ asset['asset_name'] }}"
+           required>
+  </div>
+
+  <div class="form-group">
+    <label for="location">Ubicación:</label>
+    <input type="text"
+           class="form-control"
+           id="location"
+           name="location"
+           value="{{ asset['location'] or '' }}">
+  </div>
+
+  <div class="form-group">
+    <label for="date_acquired">Fecha de Adquisición:</label>
+    <input type="date"
+           class="form-control"
+           id="date_acquired"
+           name="date_acquired"
+           value="{{ asset['date_acquired'] or '' }}">
+  </div>
+
+  <!-- Campos dinámicos del último mes -->
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label for="month">Mes:</label>
+      <input type="month"
+             class="form-control"
+             id="month"
+             name="month"
+             value="{{ asset['month'] or '' }}">
     </div>
-    <div class="form-group">
-        <label for="location">Ubicación:</label>
-        <input type="text" class="form-control" id="location" name="location" value="{{ asset['location'] }}">
+    <div class="form-group col-md-4">
+      <label for="amount">Monto:</label>
+      <input type="number"
+             step="any"
+             class="form-control"
+             id="amount"
+             name="amount"
+             value="{{ asset['amount'] or 0 }}">
     </div>
-    <div class="form-group">
-        <label for="amount">Monto:</label>
-        <input type="number" step="any" class="form-control" id="amount" name="amount" value="{{ asset['amount'] }}" required>
+    <div class="form-group col-md-4">
+      <label for="currency">Moneda:</label>
+      <select class="form-control" id="currency" name="currency">
+        <option value="USD" {% if asset['currency']=='USD' %}selected{% endif %}>USD</option>
+        <option value="MXN" {% if asset['currency']=='MXN' %}selected{% endif %}>MXN</option>
+      </select>
     </div>
-    <div class="form-group">
-        <label for="currency">Moneda:</label>
-        <select class="form-control" id="currency" name="currency">
-            <option value="USD" {% if asset['currency'] == 'USD' %}selected{% endif %}>USD</option>
-            <option value="MXN" {% if asset['currency'] == 'MXN' %}selected{% endif %}>MXN</option>
-        </select>
+  </div>
+
+  <!-- Dropdowns de clases, subclases y estatus -->
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label for="class_id">Clase:</label>
+      <select class="form-control" id="class_id" name="class_id">
+        {% for c in classes %}
+        <option value="{{ c['id'] }}"
+          {% if c['id']==asset['class_id'] %}selected{% endif %}>
+          {{ c['name'] }}
+        </option>
+        {% endfor %}
+      </select>
     </div>
-    <div class="form-group">
-        <label for="month">Mes (AAAA-MM):</label>
-        <input type="text" class="form-control" id="month" name="month" value="{{ asset['month'] }}" required>
+
+    <div class="form-group col-md-4">
+      <label for="subclass_id">Subclase:</label>
+      <select class="form-control" id="subclass_id" name="subclass_id">
+        {% for sc in subclasses %}
+        <option value="{{ sc['id'] }}"
+          {% if sc['id']==asset['subclass_id'] %}selected{% endif %}>
+          {{ sc['name'] }}
+        </option>
+        {% endfor %}
+      </select>
     </div>
-    <div class="form-group">
-        <label for="clase">Clase de Activo:</label>
-        <input type="text" class="form-control" id="clase" name="clase" value="{{ asset['clase'] }}" required>
+
+    <div class="form-group col-md-4">
+      <label for="estado">Estatus:</label>
+      <select class="form-control" id="estado" name="estado">
+        {% for st in statuses %}
+        <option value="{{ st['id'] }}"
+          {% if st['name']==asset['estado'] %}selected{% endif %}>
+          {{ st['name'] }}
+        </option>
+        {% endfor %}
+      </select>
     </div>
-    <!-- Nuevo: Campo para estado -->
-    <div class="form-group">
-        <label for="class_id">Clase:</label>
-        <select id="class_id" name="class_id" class="form-control">
-          {% for cls in classes %}
-            <option value="{{ cls.id }}"
-              {% if cls.id == asset.class_id %}selected{% endif %}>
-              {{ cls.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="subclass_id">Subclase:</label>
-        <select id="subclass_id" name="subclass_id" class="form-control">
-          {% for sc in subclasses %}
-            <option value="{{ sc.id }}"
-              {% if sc.id == asset.subclass_id %}selected{% endif %}>
-              {{ sc.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="estado">Estatus:</label>
-        <select id="estado" name="estado" class="form-control">
-          {% for st in statuses %}
-            <option value="{{ st.id }}"
-              {% if st.id == asset.estado %}selected{% endif %}>
-              {{ st.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>      
-      {% if history %}
-      <hr>
-      <h3>Histórico de este Activo</h3>
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered">
-          <thead>
-            <tr>
-              <th>Mes</th>
-              <th>Monto</th>
-              <th>Observaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for h in history %}
-            <tr>
-              <td>{{ h['month'] }}</td>
-              <td>{{ h['amount']|comma }} {{ h['currency'] }}</td>
-              <td>{{ h['observaciones'] or '' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
-      <script>
-        // Cuando cambies la clase, recarga subclases
-        $(function(){
-          $("#class_id").change(function(){
-            let cid = $(this).val();
-            $.getJSON("/api/subclasses/" + cid, function(data){
-              let $sub = $("#subclass_id").empty();
-              $.each(data, function(i, sc){
-                $sub.append($("<option>").val(sc.id).text(sc.name));
-              });
-            });
-          });
-        });
-      </script>      
-    <!-- Los demás campos que necesites... -->
-    <button type="submit" class="btn btn-primary">Actualizar Activo</button>
+  </div>
+
+  <div class="form-group">
+    <label for="observaciones">Observaciones:</label>
+    <textarea class="form-control"
+              id="observaciones"
+              name="observaciones"
+              rows="3">{{ asset['observations'] or '' }}</textarea>
+  </div>
+
+  <button type="submit" class="btn btn-success">Guardar Cambios</button>
+  <a href="{{ url_for('assets_list') }}" class="btn btn-secondary">Cancelar</a>
 </form>
-<a href="{{ url_for('assets_list') }}" class="btn btn-secondary mt-3">Volver a la Lista de Activos</a>
 {% endblock %}

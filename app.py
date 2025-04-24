@@ -577,7 +577,7 @@ def assets_history_view():
     """
     df = pd.read_sql_query(sql, conn, params=(session.get('portfolio_id'),))
     conn.close()
-   
+
     # 3) Si no hay datos
     if df.empty:
         table_html = "<p>No hay datos históricos para mostrar.</p>"
@@ -588,31 +588,75 @@ def assets_history_view():
                                     else row['amount'] / get_exchange_rate(row['month']), axis=1)
         df['mxn_value'] = df.apply(lambda row: row['amount'] if row['currency'] == 'MXN'
                                     else row['amount'] * get_exchange_rate(row['month']), axis=1)
+
+        # 5) Preparar estructuras
         months = sorted(df['month'].unique())
         exchange_rates = {m: get_exchange_rate(m) for m in months}
-        totals_usd = {m: df[df['month']==m]['usd_value'].sum() for m in months}
-        totals_mxn = {m: df[df['month']==m]['mxn_value'].sum() for m in months}
+        totals_usd = {m: df[df['month'] == m]['usd_value'].sum() for m in months}
+        totals_mxn = {m: df[df['month'] == m]['mxn_value'].sum() for m in months}
 
-        # 5) Pivot y armado de tabla HTML (igual que antes)
-        pivot = df.pivot_table(index='asset_name', columns='month', values='usd_value', aggfunc='sum').fillna("")
+        # 6) Calcular variaciones porcentuales
+        variation_usd_pct = {}
+        variation_mxn_pct = {}
+        for i, m in enumerate(months):
+            if i == 0:
+                variation_usd_pct[m] = None
+                variation_mxn_pct[m] = None
+            else:
+                prev = months[i-1]
+                # evitar división por cero
+                variation_usd_pct[m] = ((totals_usd[m] - totals_usd[prev]) / totals_usd[prev] * 100
+                                        if totals_usd[prev] else 0)
+                variation_mxn_pct[m] = ((totals_mxn[m] - totals_mxn[prev]) / totals_mxn[prev] * 100
+                                        if totals_mxn[prev] else 0)
+
+        # 7) Pivot y armado de tabla HTML
+        pivot = df.pivot_table(index='asset_name', columns='month',
+                               values='usd_value', aggfunc='sum').fillna("")
+
         html = "<table class='table table-bordered'>"
         # Header
         html += "<tr><th>Activo</th>" + "".join(f"<th>{m}</th>" for m in months) + "</tr>"
         # Tipo de cambio
-        html += "<tr><th>TC</th>" + "".join(f"<th>{exchange_rates[m]}</th>" for m in months) + "</tr>"
+        html += "<tr><th>TC</th>" + "".join(f"<th>{exchange_rates[m]:.2f}</th>" for m in months) + "</tr>"
         # Filas por activo
         for asset in pivot.index:
             html += "<tr><td>{}</td>{}</tr>".format(
                 asset,
-                "".join(f"<td>${pivot.loc[asset,m]:,.0f}</td>" if pivot.loc[asset,m]!="" else "<td></td>"
-                        for m in months)
+                "".join(
+                    f"<td>${pivot.loc[asset, m]:,.0f}</td>"
+                    if pivot.loc[asset, m] != "" else "<td></td>"
+                    for m in months
+                )
             )
         # Totales USD
-        html += "<tr><td><strong>Total USD</strong></td>" + "".join(f"<td><strong>${totals_usd[m]:,.0f}</strong></td>" for m in months) + "</tr>"
+        html += "<tr><td><strong>Total USD</strong></td>" + \
+                "".join(f"<td><strong>${totals_usd[m]:,.0f}</strong></td>" for m in months) + \
+                "</tr>"
         # Totales MXN
-        html += "<tr><td><strong>Total MXN</strong></td>" + "".join(f"<td><strong>${totals_mxn[m]:,.0f}</strong></td>" for m in months) + "</tr>"
-        # Variaciones (%)… (igual que antes)
-        # … aquí iría tu lógica de variaciones sin cambios …
+        html += "<tr><td><strong>Total MXN</strong></td>" + \
+                "".join(f"<td><strong>${totals_mxn[m]:,.0f}</strong></td>" for m in months) + \
+                "</tr>"
+        # Variación (%) USD
+        html += "<tr><td><strong>Var. % USD</strong></td>"
+        for m in months:
+            pct = variation_usd_pct[m]
+            if pct is None:
+                html += "<td></td>"
+            else:
+                color = "green" if pct >= 0 else "red"
+                html += f"<td><span style='color:{color}'> {pct:+.0f}%</span></td>"
+        html += "</tr>"
+        # Variación (%) MXN
+        html += "<tr><td><strong>Var. % MXN</strong></td>"
+        for m in months:
+            pct = variation_mxn_pct[m]
+            if pct is None:
+                html += "<td></td>"
+            else:
+                color = "green" if pct >= 0 else "red"
+                html += f"<td><span style='color:{color}'> {pct:+.0f}%</span></td>"
+        html += "</tr>"
 
         html += "</table>"
         table_html = html
