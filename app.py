@@ -228,7 +228,6 @@ def assets():
                                statuses=statuses)
 
     
-# Listado de activos
 # Listado de Activos por mes (con JOIN a asset_values)
 @app.route('/assets/list')
 @login_required
@@ -480,31 +479,6 @@ def copy_assets():
         default_new_month=default_new
     )
 
-# Evolución de activos: Por mes y clase, normalizando a MXN.
-@app.route('/assets/evolution')
-@login_required
-@portfolio_required
-def assets_evolution():
-    return redirect(url_for('assets_history_view'))
-def assets_evolution():
-    conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
-    conn.close()
-    if df.empty:
-        chart_html = "<p>No hay datos para mostrar.</p>"
-    else:
-        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        df['clase'] = df['clase'].fillna('Unknown')
-        df['valor_normalizado'] = df.apply(normalize_to_mxn, axis=1)
-        df_grouped = df.groupby(['month', 'clase'])['valor_normalizado'].sum().reset_index()
-        fig = px.bar(df_grouped, x='month', y='valor_normalizado', color='clase', barmode='group',
-                     title="Evolución de Activos por Mes y Clase")
-        total_value = df['valor_normalizado'].sum()
-        fig.update_layout(title=f"Evolución de Activos (Total: ${total_value:,.0f} MXN)",
-                          yaxis=dict(tickformat=",.0f"))
-        chart_html = fig.to_html(full_html=False)
-    return render_template('assets_evolution.html', chart_html=chart_html)
-
 # Crecimiento Mensual: Variación porcentual mes a mes (MXN).
 @app.route('/assets/monthly_growth')
 @login_required
@@ -525,34 +499,6 @@ def monthly_growth():
         fig.update_yaxes(tickformat=",.0f")
         chart_html = fig.to_html(full_html=False)
     return render_template('monthly_growth.html', chart_html=chart_html)
-
-# Comparación de Exposición por Clase: Totales, porcentajes y desviación respecto a objetivos (MXN).
-@app.route('/assets/class_comparison')
-@login_required
-def assets_class_comparison():
-    config = load_config()
-    target_exposure = config.get("target_exposure", {})
-    conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
-    conn.close()
-    if df.empty:
-        return render_template('assets_class_comparison.html', comparison=[], total_portfolio=0)
-    df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-    df['clase'] = df['clase'].fillna('Unknown')
-    df['mxn_value'] = df.apply(normalize_to_mxn, axis=1)
-    total_portfolio = df['mxn_value'].sum()
-    df_grouped = df.groupby('clase')['mxn_value'].sum().reset_index()
-    df_grouped['percentage'] = (df_grouped['mxn_value'] / total_portfolio) * 100
-    comparison = []
-    for _, row in df_grouped.iterrows():
-        comparison.append({
-            'clase': row['clase'],
-            'value': row['mxn_value'],
-            'percentage': row['percentage'],
-            'target': target_exposure.get(row['clase'], None),
-            'deviation': (row['percentage'] - target_exposure.get(row['clase'], 0)) if target_exposure.get(row['clase']) is not None else None
-        })
-    return render_template('assets_class_comparison.html', comparison=comparison, total_portfolio=total_portfolio)
 
 # HISTÓRICO DE ACTIVOS: Tabla pivote con valores normalizados a USD (principal) y totales/variaciones en USD y MXN.
 @app.route('/assets/history_view')
@@ -662,34 +608,6 @@ def assets_history_view():
         table_html = html
 
     return render_template('assets_history.html', table_html=table_html)
-
-# Análisis AI: Sugerencias basadas en la distribución por clase.
-@app.route('/assets/ai')
-@login_required
-def assets_ai():
-    conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
-    conn.close()
-    config = load_config()
-    threshold = config.get("risk_threshold", 60)
-    if df.empty:
-        suggestions = "No hay datos disponibles para el análisis."
-    else:
-        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        df['clase'] = df['clase'].fillna('Unknown')
-        total_amount = df['amount'].sum()
-        grouped = df.groupby('clase')['amount'].sum().reset_index()
-        grouped['percentage'] = (grouped['amount'] / total_amount) * 100
-        suggestions_list = []
-        for index, row in grouped.iterrows():
-            if row['percentage'] > threshold:
-                suggestions_list.append(
-                    f"Tu portafolio tiene {row['percentage']:.0f}% en la clase {row['clase']}. Considera reequilibrar tu cartera."
-                )
-        if not suggestions_list:
-            suggestions_list.append("La distribución de tu portafolio se ve balanceada.")
-        suggestions = "<br>".join(suggestions_list)
-    return render_template('assets_ai.html', suggestions=suggestions)
 
 # Configuración AI: Permite ajustar el umbral de riesgo y objetivos de exposición.
 @app.route('/assets/ai/config', methods=['GET', 'POST'])

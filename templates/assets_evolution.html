@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Evolución de Activos{% endblock %}
-{% block content %}
-<h2>Evolución de Activos por Mes y Clase</h2>
-<div>
-    {{ chart_html|safe }}
-</div>
-<a href="{{ url_for('assets_list') }}" class="btn btn-secondary mt-3">Volver a la Lista de Activos</a>
-{% endblock %}

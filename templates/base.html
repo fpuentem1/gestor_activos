@@ -43,19 +43,6 @@
                         Portafolio: {{ current_portfolio_name }}
                     </span>
                 </li>
-                <!-- Menú Reportes y Analítica, que ahora incluye Análisis AI -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="reportDropdown" role="button" 
-                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Reportes y Analítica
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="reportDropdown">
-                        <a class="dropdown-item" href="{{ url_for('assets_evolution') }}">Evolución</a>
-                        <a class="dropdown-item" href="{{ url_for('monthly_growth') }}">Crecimiento</a>
-                        <a class="dropdown-item" href="{{ url_for('assets_class_comparison') }}">Comparación</a>
-                        <a class="dropdown-item" href="{{ url_for('assets_ai') }}">Análisis AI</a>
-                    </div>
-                </li>
                 <!-- Menú Configuración -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="configDropdown" role="button"
@@ -64,7 +51,6 @@
                     </a>
                     <div class="dropdown-menu" aria-labelledby="configDropdown">
                         <a class="dropdown-item" href="{{ url_for('config_catalogs') }}">Configuración de Catálogos</a>
-                        <a class="dropdown-item" href="{{ url_for('ai_config') }}">Config AI</a>
                         <a class="dropdown-item" href="{{ url_for('exchange_rate') }}">Tipo de Cambio</a>
                         <a class="dropdown-item" href="{{ url_for('portfolios') }}">Portafolios</a>
                     </div>
