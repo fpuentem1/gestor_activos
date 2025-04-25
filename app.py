@@ -11,6 +11,17 @@ from dateutil.relativedelta import relativedelta
 
 # Importar Flask-Login
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
+import os
+from werkzeug.utils import secure_filename
+
+from flask import current_app
+
+# Carpeta donde escribir archivos subidos:
+UPLOAD_SUBFOLDER = 'uploads'
+ALLOWED_EXT = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
 
 # ======================================================
 # INICIALIZACIÓN DE LA APLICACIÓN
@@ -313,32 +324,23 @@ def update_current():
 @portfolio_required
 def edit_asset(id):
     conn = get_db_connection()
-    asset = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
-    if not asset:
+
+    # carga básico
+    asset_row = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
+    if not asset_row:
         conn.close()
         flash("Activo no encontrado.", "danger")
         return redirect(url_for('assets_list'))
 
     if request.method == 'POST':
-        # — STATICOS —
-        asset_name    = request.form['asset_name']
-        location      = request.form['location']
-        date_acquired = request.form['date_acquired']
-        class_id      = request.form['class_id']
-        subclass_id   = request.form['subclass_id']
-        observaciones = request.form.get('observaciones', "")
+        # —— 1) actualizar tabla assets ——
+        name           = request.form['asset_name']
+        location       = request.form['location']
+        date_acquired  = request.form['date_acquired']
+        class_id       = request.form['class_id']
+        subclass_id    = request.form['subclass_id']
+        observations   = request.form.get('observations', '')
 
-        # — DINÁMICOS —
-        try:
-            amount    = float(request.form['amount'])
-        except (ValueError, TypeError):
-            flash("El monto debe ser numérico.", "warning")
-            return redirect(url_for('edit_asset', id=id))
-        currency   = request.form['currency']
-        month      = request.form['month']      # p.ej. "2025-04"
-        status_id  = request.form['estado']     # debe devolver el ID del estatus
-
-        # 1) Actualizar campos estáticos en assets
         conn.execute("""
             UPDATE assets
                SET name           = ?,
@@ -348,62 +350,76 @@ def edit_asset(id):
                    subclass_id    = ?,
                    observations   = ?
              WHERE id = ?
-        """, (asset_name, location, date_acquired,
-              class_id, subclass_id, observaciones, id))
+        """, (name, location, date_acquired, class_id, subclass_id, observations, id))
 
-        # 2) Actualizar o insertar el valor dinámico en asset_values
-        #    Usamos INSERT OR REPLACE para crear si no existía
-        conn.execute("""
-            INSERT OR REPLACE INTO asset_values
-                (asset_id, month, amount, currency, status_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (id, month, amount, currency, status_id))
+        # —— 2) actualizar todos los meses en asset_values ——
+        months     = request.form.getlist('month')
+        amounts    = request.form.getlist('amount')
+        currencies = request.form.getlist('currency')
+        for m, amt, cur in zip(months, amounts, currencies):
+            try:
+                val = float(amt)
+            except:
+                val = 0.0
+            conn.execute("""
+                UPDATE asset_values
+                   SET amount   = ?,
+                       currency = ?
+                 WHERE asset_id= ? AND month = ?
+            """, (val, cur, id, m))
+
+        # —— 3) procesar adjunto nuevo (si hay) ——
+        f = request.files.get('attachment')
+        if f and allowed_file(f.filename):
+            fn = secure_filename(f.filename)
+            upload_dir = os.path.join(current_app.static_folder, UPLOAD_SUBFOLDER)
+            os.makedirs(upload_dir, exist_ok=True)
+            full_path = os.path.join(upload_dir, fn)
+            f.save(full_path)
+            rel_path  = f"{UPLOAD_SUBFOLDER}/{fn}"
+            conn.execute("""
+                INSERT INTO attachments (asset_id, filename, path)
+                     VALUES (?, ?, ?)
+            """, (id, fn, rel_path))
 
         conn.commit()
         conn.close()
-        flash("Activo actualizado correctamente.", "success")
+        flash("Activo y valores actualizados correctamente.", "success")
         return redirect(url_for('assets_list'))
 
-    # — GET: precargar último valor registrado —
-    val = conn.execute("""
-        SELECT month, amount, currency, status_id
-          FROM asset_values
-         WHERE asset_id = ?
-         ORDER BY month DESC
-         LIMIT 1
-    """, (id,)).fetchone()
-
-    a = dict(asset)  # convertimos a dict para añadir campos
-    a['asset_name'] = asset['name']  # legacy
-    if val:
-        a.update({
-            'month':      val['month'],
-            'amount':     val['amount'],
-            'currency':   val['currency'],
-            'estado':     conn.execute(
-                              "SELECT name FROM statuses WHERE id = ?",
-                              (val['status_id'],)
-                          ).fetchone()['name']
-        })
     else:
-        a.update({'month': "", 'amount': 0, 'currency': "", 'estado': ""})
+        # —— GET: recuperar datos estáticos ——
+        asset = dict(asset_row)
 
-    # Cargar catálogos
-    classes    = conn.execute("SELECT * FROM classes").fetchall()
-    subclasses = conn.execute(
-        "SELECT * FROM subclasses WHERE class_id = ?",
-        (a['class_id'],)
-    ).fetchall()
-    statuses   = conn.execute("SELECT * FROM statuses").fetchall()
-    conn.close()
+        # —— valores históricos ——  
+        values = conn.execute("""
+            SELECT month, amount, currency
+              FROM asset_values
+             WHERE asset_id = ?
+             ORDER BY month
+        """, (id,)).fetchall()
 
-    return render_template(
-        'edit_asset.html',
-        asset=a,
-        classes=classes,
-        subclasses=subclasses,
-        statuses=statuses
-    )
+        # —— adjuntos existentes ——
+        attachments = conn.execute("""
+            SELECT filename, path
+              FROM attachments
+             WHERE asset_id = ?
+        """, (id,)).fetchall()
+
+        # —— catálogos ——
+        classes    = conn.execute("SELECT * FROM classes").fetchall()
+        subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?",
+                                  (asset['class_id'],)).fetchall()
+        statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+
+        conn.close()
+        return render_template('edit_asset.html',
+                               asset=asset,
+                               values=values,
+                               attachments=attachments,
+                               classes=classes,
+                               subclasses=subclasses,
+                               statuses=statuses)
         
 # Eliminación de activo (con confirmación)
 @app.route('/assets/delete/<int:id>', methods=['POST'])
