@@ -1,0 +1,56 @@
+app.py:112:    row = conn.execute('SELECT rate FROM exchange_rate WHERE month = ?', (month,)).fetchone()
+app.py:206:                '''INSERT INTO assets
+app.py:215:                '''INSERT INTO asset_values
+app.py:234:        classes  = conn.execute("SELECT * FROM classes").fetchall()
+app.py:235:        statuses = conn.execute("SELECT * FROM statuses").fetchall()
+app.py:256:        SELECT
+app.py:278:        SELECT DISTINCT month
+app.py:302:        assets = conn.execute("SELECT id FROM assets WHERE month = ? AND portfolio_id = ?", (current_month, session.get('portfolio_id'))).fetchall()
+app.py:308:                    conn.execute("UPDATE assets SET asset_values = ? WHERE id = ?", (new_amount, asset['id']))
+app.py:316:        assets = conn.execute("SELECT * FROM assets WHERE month = ? AND portfolio_id = ? AND (observaciones IS NULL OR observaciones = '')",
+app.py:329:    asset_row = conn.execute('SELECT * FROM assets WHERE id = ?', (id,)).fetchone()
+app.py:345:            UPDATE assets
+app.py:365:                UPDATE asset_values
+app.py:381:                INSERT INTO attachments (asset_id, filename, path)
+app.py:396:            SELECT month, amount, currency
+app.py:404:            SELECT filename, path
+app.py:410:        classes    = conn.execute("SELECT * FROM classes").fetchall()
+app.py:411:        subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?",
+app.py:413:        statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+app.py:429:    conn.execute('DELETE FROM assets WHERE id = ?', (id,))
+app.py:452:                SELECT amount, currency, status_id
+app.py:458:                    INSERT OR IGNORE INTO asset_values
+app.py:472:        SELECT
+app.py:507:    SELECT
+app.py:619:        existing = conn.execute('SELECT * FROM exchange_rate WHERE month = ?', (month,)).fetchone()
+app.py:621:            conn.execute('UPDATE exchange_rate SET rate = ? WHERE month = ?', (rate, month))
+app.py:623:            conn.execute('INSERT INTO exchange_rate (month, rate) VALUES (?, ?)', (month, rate))
+app.py:642:    portfolios = conn.execute('SELECT * FROM portfolios').fetchall()
+app.py:654:                conn.execute('INSERT INTO portfolios (name) VALUES (?)', (name,))
+app.py:681:    row = conn.execute('SELECT name FROM portfolios WHERE id = ?', (portfolio_id,)).fetchone()
+app.py:694:    classes = conn.execute("SELECT * FROM classes").fetchall()
+app.py:704:    subclasses = conn.execute("SELECT * FROM subclasses WHERE class_id = ?", (class_id,)).fetchall()
+app.py:718:    classes    = conn.execute("SELECT * FROM classes").fetchall()
+app.py:719:    subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+app.py:720:    statuses   = conn.execute("SELECT * FROM statuses").fetchall()
+app.py:737:            conn.execute("INSERT INTO classes (name) VALUES (?)", (name,))
+app.py:745:        classes = conn.execute("SELECT * FROM classes").fetchall()
+app.py:746:        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+app.py:755:    clase = conn.execute("SELECT * FROM classes WHERE id = ?", (class_id,)).fetchone()
+app.py:766:            conn.execute("UPDATE classes SET name = ? WHERE id = ?", (new_name, class_id))
+app.py:779:    conn.execute("DELETE FROM classes WHERE id = ?", (class_id,))
+app.py:794:            conn.execute("INSERT INTO subclasses (class_id, name) VALUES (?, ?)", (class_id, name))
+app.py:804:        classes = conn.execute("SELECT * FROM classes").fetchall()
+app.py:805:        subclasses = conn.execute("SELECT * FROM subclasses").fetchall()
+app.py:815:    subclass = conn.execute("SELECT * FROM subclasses WHERE id = ?", (subclass_id,)).fetchone()
+app.py:828:                "UPDATE subclasses SET name = ?, class_id = ? WHERE id = ?",
+app.py:837:    classes = conn.execute("SELECT * FROM classes").fetchall()
+app.py:846:    conn.execute("DELETE FROM subclasses WHERE id = ?", (subclass_id,))
+app.py:861:            conn.execute("INSERT INTO statuses (name) VALUES (?)", (name,))
+app.py:869:        statuses = conn.execute("SELECT * FROM statuses").fetchall()
+app.py:878:    status = conn.execute("SELECT * FROM statuses WHERE id = ?", (status_id,)).fetchone()
+app.py:889:            conn.execute("UPDATE statuses SET name = ? WHERE id = ?", (new_name, status_id))
+app.py:902:    conn.execute("DELETE FROM statuses WHERE id = ?", (status_id,))
+app.py:920:                SELECT amount, currency, status_id
+app.py:926:                    INSERT OR IGNORE INTO asset_values
+app.py:940:        SELECT
