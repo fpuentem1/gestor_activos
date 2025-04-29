@@ -495,27 +495,6 @@ def copy_assets():
         default_new_month=default_new
     )
 
-# Crecimiento Mensual: Variación porcentual mes a mes (MXN).
-@app.route('/assets/monthly_growth')
-@login_required
-def monthly_growth():
-    conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM assets", conn)
-    conn.close()
-    if df.empty:
-        chart_html = "<p>No hay datos para mostrar.</p>"
-    else:
-        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        df['mxn_value'] = df.apply(normalize_to_mxn, axis=1)
-        df_monthly = df.groupby('month')['mxn_value'].sum().reset_index()
-        df_monthly = df_monthly.sort_values('month')
-        df_monthly['growth'] = df_monthly['mxn_value'].pct_change() * 100
-        fig = px.line(df_monthly, x='month', y='growth', markers=True, 
-                      title="Crecimiento Porcentual Mensual (MXN)")
-        fig.update_yaxes(tickformat=",.0f")
-        chart_html = fig.to_html(full_html=False)
-    return render_template('monthly_growth.html', chart_html=chart_html)
-
 # HISTÓRICO DE ACTIVOS: Tabla pivote con valores normalizados a USD (principal) y totales/variaciones en USD y MXN.
 @app.route('/assets/history_view')
 @login_required
@@ -624,31 +603,6 @@ def assets_history_view():
         table_html = html
 
     return render_template('assets_history.html', table_html=table_html)
-
-# Configuración AI: Permite ajustar el umbral de riesgo y objetivos de exposición.
-@app.route('/assets/ai/config', methods=['GET', 'POST'])
-@login_required
-def ai_config():
-    config = load_config()
-    message = None
-    if request.method == 'POST':
-        new_threshold = request.form.get('risk_threshold')
-        try:
-            new_threshold = int(new_threshold)
-            config['risk_threshold'] = new_threshold
-        except ValueError:
-            message = "Por favor, ingresa un número válido para el umbral."
-        target_exposure = {}
-        for clase in ["Acciones", "Bonos", "Inmuebles", "Otros"]:
-            value = request.form.get(clase)
-            try:
-                target_exposure[clase] = int(value)
-            except (ValueError, TypeError):
-                target_exposure[clase] = config.get("target_exposure", {}).get(clase, 0)
-        config['target_exposure'] = target_exposure
-        save_config(config)
-        message = "Configuración actualizada correctamente."
-    return render_template('ai_config.html', config=config, message=message)
 
 # Tipo de Cambio Global: Permite actualizar el tipo de cambio para un mes.
 @app.route('/exchange_rate', methods=['GET', 'POST'])
